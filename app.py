@@ -1,5 +1,5 @@
 import io
-from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, session, redirect, url_for, flash
 from werkzeug.security import check_password_hash
 from pymongo import MongoClient
 from bson import ObjectId
@@ -11,6 +11,7 @@ from werkzeug.security import generate_password_hash
 import qrcode
 import base64
 from io import BytesIO
+
 
 
 # Load environment variables
@@ -44,7 +45,11 @@ users_collection = db[USERS_COLLECTION]
 
 print("Connected to DB:", DB_NAME)
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
+def landing():
+    return send_from_directory(".", "index.html")
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form.get("username")
