@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Reports | Triple P Farms and Nursery</title>
+    <meta
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+      name="viewport"
+    />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='assets/img/triple-logo.jpg') }}"
+      type="image/x-icon"
+    />
+
+    <!-- Fonts and icons -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/webfont/webfont.min.js') }}"></script>
+    <script>
+      WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+          families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+          ],
+          urls: ["{{ url_for('static', filename='assets/css/fonts.min.css') }}"],
+        },
+        active: function () {
+          sessionStorage.fonts = true;
+        },
+      });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/plugins.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/kaiadmin.min.css') }}" />
+
+    <!-- CSS Just for demo purpose, don't include it in your project -->
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Sidebar -->
+      <div class="sidebar" data-background-color="dark">
+        <div class="sidebar-logo">
+          <!-- Logo Header -->
+          <div class="logo-header" data-background-color="dark">
+            <a href="{{ url_for('dashboard') }}" class="logo">
+              <img
+                src="{{ url_for('static', filename='assets/img/triple-logo-dark2.jpg') }}"
+                alt="navbar brand"
+                class="navbar-brand"
+                height="20"
+              />
+            </a>
+            <div class="nav-toggle">
+              <button class="btn btn-toggle toggle-sidebar">
+                <i class="gg-menu-right"></i>
+              </button>
+              <button class="btn btn-toggle sidenav-toggler">
+                <i class="gg-menu-left"></i>
+              </button>
+            </div>
+            <button class="topbar-toggler more">
+              <i class="gg-more-vertical-alt"></i>
+            </button>
+          </div>
+          <!-- End Logo Header -->
+        </div>
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+          <div class="sidebar-content">
+            <ul class="nav nav-secondary">
+              <li class="nav-item">
+                <a
+                  href="{{ url_for('dashboard') }}"
+                >
+                  <i class="fas fa-home"></i>
+                  <p>Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-section">
+                <span class="sidebar-mini-icon">
+                  <i class="fa fa-ellipsis-h"></i>
+                </span>
+                <h4 class="text-section">Components</h4>
+              </li>
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#tables">
+                  <i class="fas fa-boxes"></i>
+                  <p>Inventory</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="tables">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('supplies') }}">
+                        <span class="sub-item">Supplies</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('equipment') }}">
+                        <span class="sub-item">Tools & Equipments</span>
+                      </a>
+                    </li>
+
+                  </ul>
+                </div>
+              </li>
+                            <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#tools">
+                  <i class="fas fa-toolbox"></i>
+                  <p>Borrowed Items</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="tools">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('tools') }}">
+                        <span class="sub-item">Approved</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#maps">
+                  <i class="fas fa-users"></i>
+                  <p>Farmers</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="maps">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('approved_farmers') }}">
+                        <span class="sub-item">Approved</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('pending_farmers') }}">
+                        <span class="sub-item">Waiting for Approval</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="nav-item active">
+                <a href="{{ url_for('reports') }}">
+                  <i class="far fa-chart-bar"></i>
+                  <p>Reports</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- End Sidebar -->
+
+      <div class="main-panel">
+        <div class="main-header">
+          <div class="main-header-logo">
+            <!-- Logo Header -->
+            <div class="logo-header" data-background-color="dark">
+              <a href="{{ url_for('dashboard') }}" class="logo">
+                <img
+                  src="{{ url_for('static', filename='assets/img/triple-logo-dark2.jpg') }}"
+                  alt="navbar brand"
+                  class="navbar-brand"
+                  height="20"
+                />
+              </a>
+              <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                  <i class="gg-menu-right"></i>
+                </button>
+                <button class="btn btn-toggle sidenav-toggler">
+                  <i class="gg-menu-left"></i>
+                </button>
+              </div>
+              <button class="topbar-toggler more">
+                <i class="gg-more-vertical-alt"></i>
+              </button>
+            </div>
+            <!-- End Logo Header -->
+          </div>
+          <!-- Navbar Header -->
+          <nav
+            class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom"
+          >
+            <div class="container-fluid">
+              <nav
+                class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
+              >
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <button type="submit" class="btn btn-search pe-1">
+                      <i class="fa fa-search search-icon"></i>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search ..."
+                    class="form-control"
+                  />
+                </div>
+              </nav>
+
+              <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+                <li
+                  class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none"
+                >
+                  <a
+                    class="nav-link dropdown-toggle"
+                    data-bs-toggle="dropdown"
+                    href="#"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <i class="fa fa-search"></i>
+                  </a>
+                  <ul class="dropdown-menu dropdown-search animated fadeIn">
+                    <form class="navbar-left navbar-form nav-search">
+                      <div class="input-group">
+                        <input
+                          type="text"
+                          placeholder="Search ..."
+                          class="form-control"
+                        />
+                      </div>
+                    </form>
+                  </ul>
+                </li>
+                <li class="nav-item topbar-icon dropdown hidden-caret">
+                  <a
+                    class="nav-link dropdown-toggle"
+                    href="#"
+                    id="messageDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    <i class="fa fa-envelope"></i>
+                  </a>
+                  <ul
+                    class="dropdown-menu messages-notif-box animated fadeIn"
+                    aria-labelledby="messageDropdown"
+                  >
+                    <li>
+                      <div
+                        class="dropdown-title d-flex justify-content-between align-items-center"
+                      >
+                        Messages
+                        <a href="#" class="small">Mark all as read</a>
+                      </div>
+                    </li>
+                    <li>
+                      <a class="see-all" href="javascript:void(0);"
+                        >See all messages<i class="fa fa-angle-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="nav-item topbar-icon dropdown hidden-caret">
+                  <a
+                    class="nav-link dropdown-toggle"
+                    href="#"
+                    id="notifDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    <i class="fa fa-bell"></i>
+                  </a>
+                  <ul
+                    class="dropdown-menu notif-box animated fadeIn"
+                    aria-labelledby="notifDropdown"
+                  >
+                    <li>
+                      <div class="dropdown-title">
+                        You have no new notification
+                      </div>
+                    </li>
+                    <li>
+                      <a class="see-all" href="javascript:void(0);"
+                        >See all notifications<i class="fa fa-angle-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+
+                <li class="nav-item topbar-user dropdown hidden-caret">
+                  <a
+                    class="dropdown-toggle profile-pic"
+                    data-bs-toggle="dropdown"
+                    href="#"
+                    aria-expanded="false"
+                  >
+                    <div class="avatar-sm">
+                      <img
+                        src="{{ url_for('static', filename='assets/img/default-profile3.png') }}"
+                        alt="..."
+                        class="avatar-img rounded-circle"
+                      />
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu dropdown-user animated fadeIn">
+                    <div class="dropdown-user-scroll scrollbar-outer">
+                      <li>
+                        <div class="user-box">
+                          <div class="avatar-lg">
+                            <img
+                              src="{{ url_for('static', filename='assets/img/default-profile3.png') }}"
+                              alt="image profile"
+                              class="avatar-img rounded"
+                            />
+                          </div>
+                          <div class="u-text">
+                            <h4>Admin</h4>
+                            <p class="text-muted">admin@example.com</p>
+                            <a
+                              href="profile.html"
+                              class="btn btn-xs btn-secondary btn-sm"
+                              >View Profile</a
+                            >
+                          </div>
+                        </div>
+                      </li>
+                      <li>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">My Profile</a>
+                        <a class="dropdown-item" href="#">Inbox</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Account Setting</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Logout</a>
+                      </li>
+                    </div>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </nav>
+          <!-- End Navbar -->
+        </div>
+
+        <div class="container">
+          <div class="page-inner">
+            <h3 class="fw-bold mb-3">Reports</h3>
+            <!--<div class="page-category">
+              Simple yet flexible JavaScript charting for designers &
+              developers. Please checkout their
+              <a href="http://www.chartjs.org/" target="_blank"
+                >full documentation</a
+              >.
+            </div>-->
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+  <div class="card-title">Supply Report</div>
+  <div class="card-tools">
+    <div class="dropdown">
+  <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+    <span class="btn-label">
+      <i class="fa fa-print"></i>
+    </span>
+    Print
+  </a>
+  <ul class="dropdown-menu">
+    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('daily')">Daily</a></li>
+    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('weekly')">Weekly</a></li>
+    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('monthly')">Monthly</a></li>
+    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>
+  </ul>
+</div>
+
+
+  </div>
+</div>
+
+                  <div class="card-body">
+                    <div class="mb-3">
+  <button class="btn btn-primary" onclick="updateChartView('daily')">Daily</button>
+  <button class="btn btn-secondary" onclick="updateChartView('weekly')">Weekly</button>
+  <button class="btn btn-info" onclick="updateChartView('monthly')">Monthly</button>
+</div>
+
+<div class="chart-container" style="position: relative; height: 350px;">
+                        <!-- Buttons -->
+                      <canvas id="lineChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!--
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Bar Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas id="barChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Pie Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas
+                        id="pieChart"
+                        style="width: 50%; height: 50%"
+                      ></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Doughnut Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas
+                        id="doughnutChart"
+                        style="width: 50%; height: 50%"
+                      ></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Radar Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas id="radarChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Bubble Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas id="bubbleChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Multiple Line Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas id="multipleLineChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Multiple Bar Chart</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="chart-container">
+                      <canvas id="multipleBarChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="card-title">Chart with HTML Legends</div>
+                  </div>
+                  <div class="card-body">
+                    <div class="card-sub">
+                      Sometimes you need a very complex legend. In these cases,
+                      it makes sense to generate an HTML legend. Charts provide
+                      a generateLegend() method on their prototype that returns
+                      an HTML string for the legend.
+                    </div>
+                    <div class="chart-container">
+                      <canvas id="htmlLegendsChart"></canvas>
+                    </div>
+                    <div id="myChartLegend"></div>
+                  </div>
+                </div>
+              </div>-->
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="container-fluid d-flex justify-content-between">
+            <div>
+              All rights reserved Triple P farms 2025
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <!-- Custom template | don't include it in your project! -->
+      <div class="custom-template">
+        <div class="title">Settings</div>
+        <div class="custom-content">
+          <div class="switcher">
+            <div class="switch-block">
+              <h4>Logo Header</h4>
+              <div class="btnSwitch">
+                <button
+                  type="button"
+                  class="selected changeLogoHeaderColor"
+                  data-color="dark"
+                ></button>
+                <button
+                  type="button"
+                  class="selected changeLogoHeaderColor"
+                  data-color="blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="purple"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="light-blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="green"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="orange"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="red"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="white"
+                ></button>
+                <br />
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="dark2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="purple2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="light-blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="green2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="orange2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="red2"
+                ></button>
+              </div>
+            </div>
+            <div class="switch-block">
+              <h4>Navbar Header</h4>
+              <div class="btnSwitch">
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="dark"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="purple"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="light-blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="green"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="orange"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="red"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="white"
+                ></button>
+                <br />
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="dark2"
+                ></button>
+                <button
+                  type="button"
+                  class="selected changeTopBarColor"
+                  data-color="blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="purple2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="light-blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="green2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="orange2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="red2"
+                ></button>
+              </div>
+            </div>
+            <div class="switch-block">
+              <h4>Sidebar</h4>
+              <div class="btnSwitch">
+                <button
+                  type="button"
+                  class="selected changeSideBarColor"
+                  data-color="white"
+                ></button>
+                <button
+                  type="button"
+                  class="changeSideBarColor"
+                  data-color="dark"
+                ></button>
+                <button
+                  type="button"
+                  class="changeSideBarColor"
+                  data-color="dark2"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="custom-toggle">
+          <i class="icon-settings"></i>
+        </div>
+      </div>
+      <!-- End Custom template -->
+    </div>
+    <!--   PDF Files   -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+
+    <!--   Core JS Files   -->
+    <script src="{{ url_for('static', filename='assets/js/core/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/core/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/core/bootstrap.min.js') }}"></script>
+    <!-- Chart JS -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/chart.js/chart.min.js') }}"></script>
+    <!-- jQuery Scrollbar -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
+    <!-- Kaiadmin JS -->
+    <script src="{{ url_for('static', filename='assets/js/kaiadmin.min.js') }}"></script>
+    <!-- Kaiadmin DEMO methods, don't include it in your project! -->
+    <script src="{{ url_for('static', filename='assets/js/setting-demo2.js') }}"></script>
+
+<script>
+let chartInstance;
+let chartDataSets = {
+  daily: { labels: [], data: [] },
+  weekly: { labels: [], data: [] },
+  monthly: { labels: [], data: [] }
+};
+
+async function loadSuppliesChart() {
+  try {
+    const response = await fetch("/api/supplies");
+    const supplies = await response.json();
+
+    supplies.forEach(s => {
+      s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
+    });
+
+    // DAILY (last 7 days)
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+      const label = day.toLocaleDateString();
+      const total = supplies
+        .filter(s => isSameDay(s.dateAdded, day))
+        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+
+      chartDataSets.daily.labels.push(label);
+      chartDataSets.daily.data.push(total);
+    }
+
+    // WEEKLY (last 4 weeks)
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = getStartOfWeek(new Date());
+      weekStart.setDate(weekStart.getDate() - i * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+      const total = supplies
+        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
+        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+
+      chartDataSets.weekly.labels.push(label);
+      chartDataSets.weekly.data.push(total);
+    }
+
+    // MONTHLY (last 12 months)
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    for (let i = 11; i >= 0; i--) {
+      const month = new Date();
+      month.setMonth(month.getMonth() - i);
+
+      const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
+      const total = supplies
+        .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
+                     s.dateAdded.getFullYear() === month.getFullYear())
+        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+
+      chartDataSets.monthly.labels.push(label);
+      chartDataSets.monthly.data.push(total);
+    }
+
+    // Initial chart (Daily as bar)
+    const ctx = document.getElementById("lineChart").getContext("2d");
+    chartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: chartDataSets.daily.labels,
+        datasets: [{
+          label: "Supplies Added (Daily)",
+          backgroundColor: "#1d7af3",
+          borderColor: "#1d7af3",
+          borderWidth: 1,
+          data: chartDataSets.daily.data
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { padding: 10, color: "#1d7af3" }
+          },
+          tooltip: {
+            mode: "nearest",
+            intersect: false,
+            padding: 10
+          }
+        },
+        layout: { padding: { left: 15, right: 15, top: 15, bottom: 15 } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("Error loading supplies chart:", err);
+  }
+}
+
+function updateChartView(type) {
+  if (!chartInstance) return;
+  chartInstance.data.labels = chartDataSets[type].labels;
+  chartInstance.data.datasets[0].data = chartDataSets[type].data;
+  chartInstance.data.datasets[0].label =
+    type === "daily" ? "Supplies Added (Daily)" :
+    type === "weekly" ? "Supplies Added (Weekly)" :
+    "Supplies Added (Monthly)";
+  chartInstance.update();
+}
+
+// Helpers
+function isSameDay(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+function getStartOfWeek(date) {
+  const day = new Date(date);
+  const dayOfWeek = day.getDay();
+  const diff = day.getDate() - dayOfWeek;
+  day.setDate(diff);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+document.addEventListener("DOMContentLoaded", loadSuppliesChart);
+
+</script>
+
+<!-- Chart.js 
+      var lineChart = document.getElementById("lineChart").getContext("2d"),
+        barChart = document.getElementById("barChart").getContext("2d"),
+        pieChart = document.getElementById("pieChart").getContext("2d"),
+        doughnutChart = document
+          .getElementById("doughnutChart")
+          .getContext("2d"),
+        radarChart = document.getElementById("radarChart").getContext("2d"),
+        bubbleChart = document.getElementById("bubbleChart").getContext("2d"),
+        multipleLineChart = document
+          .getElementById("multipleLineChart")
+          .getContext("2d"),
+        multipleBarChart = document
+          .getElementById("multipleBarChart")
+          .getContext("2d"),
+        htmlLegendsChart = document
+          .getElementById("htmlLegendsChart")
+          .getContext("2d");
+
+      var myLineChart = new Chart(lineChart, {
+        type: "line",
+        data: {
+          labels: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ],
+          datasets: [
+            {
+              label: "Active Users",
+              borderColor: "#1d7af3",
+              pointBorderColor: "#FFF",
+              pointBackgroundColor: "#1d7af3",
+              pointBorderWidth: 2,
+              pointHoverRadius: 4,
+              pointHoverBorderWidth: 1,
+              pointRadius: 4,
+              backgroundColor: "transparent",
+              fill: true,
+              borderWidth: 2,
+              data: [
+                542, 480, 430, 550, 530, 453, 380, 434, 568, 610, 700, 900,
+              ],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "bottom",
+            labels: {
+              padding: 10,
+              fontColor: "#1d7af3",
+            },
+          },
+          tooltips: {
+            bodySpacing: 4,
+            mode: "nearest",
+            intersect: 0,
+            position: "nearest",
+            xPadding: 10,
+            yPadding: 10,
+            caretPadding: 10,
+          },
+          layout: {
+            padding: { left: 15, right: 15, top: 15, bottom: 15 },
+          },
+        },
+      });
+
+      var myBarChart = new Chart(barChart, {
+        type: "bar",
+        data: {
+          labels: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ],
+          datasets: [
+            {
+              label: "Sales",
+              backgroundColor: "rgb(23, 125, 255)",
+              borderColor: "rgb(23, 125, 255)",
+              data: [3, 2, 9, 5, 4, 6, 4, 6, 7, 8, 7, 4],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  beginAtZero: true,
+                },
+              },
+            ],
+          },
+        },
+      });
+
+      var myPieChart = new Chart(pieChart, {
+        type: "pie",
+        data: {
+          datasets: [
+            {
+              data: [50, 35, 15],
+              backgroundColor: ["#1d7af3", "#f3545d", "#fdaf4b"],
+              borderWidth: 0,
+            },
+          ],
+          labels: ["New Visitors", "Subscribers", "Active Users"],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "bottom",
+            labels: {
+              fontColor: "rgb(154, 154, 154)",
+              fontSize: 11,
+              usePointStyle: true,
+              padding: 20,
+            },
+          },
+          pieceLabel: {
+            render: "percentage",
+            fontColor: "white",
+            fontSize: 14,
+          },
+          tooltips: false,
+          layout: {
+            padding: {
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: 20,
+            },
+          },
+        },
+      });
+
+      var myDoughnutChart = new Chart(doughnutChart, {
+        type: "doughnut",
+        data: {
+          datasets: [
+            {
+              data: [10, 20, 30],
+              backgroundColor: ["#f3545d", "#fdaf4b", "#1d7af3"],
+            },
+          ],
+
+          labels: ["Red", "Yellow", "Blue"],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "bottom",
+          },
+          layout: {
+            padding: {
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: 20,
+            },
+          },
+        },
+      });
+
+      var myRadarChart = new Chart(radarChart, {
+        type: "radar",
+        data: {
+          labels: ["Running", "Swimming", "Eating", "Cycling", "Jumping"],
+          datasets: [
+            {
+              data: [20, 10, 30, 2, 30],
+              borderColor: "#1d7af3",
+              backgroundColor: "rgba(29, 122, 243, 0.25)",
+              pointBackgroundColor: "#1d7af3",
+              pointHoverRadius: 4,
+              pointRadius: 3,
+              label: "Team 1",
+            },
+            {
+              data: [10, 20, 15, 30, 22],
+              borderColor: "#716aca",
+              backgroundColor: "rgba(113, 106, 202, 0.25)",
+              pointBackgroundColor: "#716aca",
+              pointHoverRadius: 4,
+              pointRadius: 3,
+              label: "Team 2",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "bottom",
+          },
+        },
+      });
+
+      var myBubbleChart = new Chart(bubbleChart, {
+        type: "bubble",
+        data: {
+          datasets: [
+            {
+              label: "Car",
+              data: [
+                { x: 25, y: 17, r: 25 },
+                { x: 30, y: 25, r: 28 },
+                { x: 35, y: 30, r: 8 },
+              ],
+              backgroundColor: "#716aca",
+            },
+            {
+              label: "Motorcycles",
+              data: [
+                { x: 10, y: 17, r: 20 },
+                { x: 30, y: 10, r: 7 },
+                { x: 35, y: 20, r: 10 },
+              ],
+              backgroundColor: "#1d7af3",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "bottom",
+          },
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  beginAtZero: true,
+                },
+              },
+            ],
+            xAxes: [
+              {
+                ticks: {
+                  beginAtZero: true,
+                },
+              },
+            ],
+          },
+        },
+      });
+
+      var myMultipleLineChart = new Chart(multipleLineChart, {
+        type: "line",
+        data: {
+          labels: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ],
+          datasets: [
+            {
+              label: "Python",
+              borderColor: "#1d7af3",
+              pointBorderColor: "#FFF",
+              pointBackgroundColor: "#1d7af3",
+              pointBorderWidth: 2,
+              pointHoverRadius: 4,
+              pointHoverBorderWidth: 1,
+              pointRadius: 4,
+              backgroundColor: "transparent",
+              fill: true,
+              borderWidth: 2,
+              data: [30, 45, 45, 68, 69, 90, 100, 158, 177, 200, 245, 256],
+            },
+            {
+              label: "PHP",
+              borderColor: "#59d05d",
+              pointBorderColor: "#FFF",
+              pointBackgroundColor: "#59d05d",
+              pointBorderWidth: 2,
+              pointHoverRadius: 4,
+              pointHoverBorderWidth: 1,
+              pointRadius: 4,
+              backgroundColor: "transparent",
+              fill: true,
+              borderWidth: 2,
+              data: [10, 20, 55, 75, 80, 48, 59, 55, 23, 107, 60, 87],
+            },
+            {
+              label: "Ruby",
+              borderColor: "#f3545d",
+              pointBorderColor: "#FFF",
+              pointBackgroundColor: "#f3545d",
+              pointBorderWidth: 2,
+              pointHoverRadius: 4,
+              pointHoverBorderWidth: 1,
+              pointRadius: 4,
+              backgroundColor: "transparent",
+              fill: true,
+              borderWidth: 2,
+              data: [10, 30, 58, 79, 90, 105, 117, 160, 185, 210, 185, 194],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "top",
+          },
+          tooltips: {
+            bodySpacing: 4,
+            mode: "nearest",
+            intersect: 0,
+            position: "nearest",
+            xPadding: 10,
+            yPadding: 10,
+            caretPadding: 10,
+          },
+          layout: {
+            padding: { left: 15, right: 15, top: 15, bottom: 15 },
+          },
+        },
+      });
+
+      var myMultipleBarChart = new Chart(multipleBarChart, {
+        type: "bar",
+        data: {
+          labels: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ],
+          datasets: [
+            {
+              label: "First time visitors",
+              backgroundColor: "#59d05d",
+              borderColor: "#59d05d",
+              data: [95, 100, 112, 101, 144, 159, 178, 156, 188, 190, 210, 245],
+            },
+            {
+              label: "Visitors",
+              backgroundColor: "#fdaf4b",
+              borderColor: "#fdaf4b",
+              data: [
+                145, 256, 244, 233, 210, 279, 287, 253, 287, 299, 312, 356,
+              ],
+            },
+            {
+              label: "Pageview",
+              backgroundColor: "#177dff",
+              borderColor: "#177dff",
+              data: [
+                185, 279, 273, 287, 234, 312, 322, 286, 301, 320, 346, 399,
+              ],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            position: "bottom",
+          },
+          title: {
+            display: true,
+            text: "Traffic Stats",
+          },
+          tooltips: {
+            mode: "index",
+            intersect: false,
+          },
+          responsive: true,
+          scales: {
+            xAxes: [
+              {
+                stacked: true,
+              },
+            ],
+            yAxes: [
+              {
+                stacked: true,
+              },
+            ],
+          },
+        },
+      });
+
+      // Chart with HTML Legends
+
+      var gradientStroke = htmlLegendsChart.createLinearGradient(
+        500,
+        0,
+        100,
+        0
+      );
+      gradientStroke.addColorStop(0, "#177dff");
+      gradientStroke.addColorStop(1, "#80b6f4");
+
+      var gradientFill = htmlLegendsChart.createLinearGradient(500, 0, 100, 0);
+      gradientFill.addColorStop(0, "rgba(23, 125, 255, 0.7)");
+      gradientFill.addColorStop(1, "rgba(128, 182, 244, 0.3)");
+
+      var gradientStroke2 = htmlLegendsChart.createLinearGradient(
+        500,
+        0,
+        100,
+        0
+      );
+      gradientStroke2.addColorStop(0, "#f3545d");
+      gradientStroke2.addColorStop(1, "#ff8990");
+
+      var gradientFill2 = htmlLegendsChart.createLinearGradient(500, 0, 100, 0);
+      gradientFill2.addColorStop(0, "rgba(243, 84, 93, 0.7)");
+      gradientFill2.addColorStop(1, "rgba(255, 137, 144, 0.3)");
+
+      var gradientStroke3 = htmlLegendsChart.createLinearGradient(
+        500,
+        0,
+        100,
+        0
+      );
+      gradientStroke3.addColorStop(0, "#fdaf4b");
+      gradientStroke3.addColorStop(1, "#ffc478");
+
+      var gradientFill3 = htmlLegendsChart.createLinearGradient(500, 0, 100, 0);
+      gradientFill3.addColorStop(0, "rgba(253, 175, 75, 0.7)");
+      gradientFill3.addColorStop(1, "rgba(255, 196, 120, 0.3)");
+
+      var myHtmlLegendsChart = new Chart(htmlLegendsChart, {
+        type: "line",
+        data: {
+          labels: [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ],
+          datasets: [
+            {
+              label: "Subscribers",
+              borderColor: gradientStroke2,
+              pointBackgroundColor: gradientStroke2,
+              pointRadius: 0,
+              backgroundColor: gradientFill2,
+              legendColor: "#f3545d",
+              fill: true,
+              borderWidth: 1,
+              data: [
+                154, 184, 175, 203, 210, 231, 240, 278, 252, 312, 320, 374,
+              ],
+            },
+            {
+              label: "New Visitors",
+              borderColor: gradientStroke3,
+              pointBackgroundColor: gradientStroke3,
+              pointRadius: 0,
+              backgroundColor: gradientFill3,
+              legendColor: "#fdaf4b",
+              fill: true,
+              borderWidth: 1,
+              data: [
+                256, 230, 245, 287, 240, 250, 230, 295, 331, 431, 456, 521,
+              ],
+            },
+            {
+              label: "Active Users",
+              borderColor: gradientStroke,
+              pointBackgroundColor: gradientStroke,
+              pointRadius: 0,
+              backgroundColor: gradientFill,
+              legendColor: "#177dff",
+              fill: true,
+              borderWidth: 1,
+              data: [
+                542, 480, 430, 550, 530, 453, 380, 434, 568, 610, 700, 900,
+              ],
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            display: false,
+          },
+          tooltips: {
+            bodySpacing: 4,
+            mode: "nearest",
+            intersect: 0,
+            position: "nearest",
+            xPadding: 10,
+            yPadding: 10,
+            caretPadding: 10,
+          },
+          layout: {
+            padding: { left: 15, right: 15, top: 15, bottom: 15 },
+          },
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  fontColor: "rgba(0,0,0,0.5)",
+                  fontStyle: "500",
+                  beginAtZero: false,
+                  maxTicksLimit: 5,
+                  padding: 20,
+                },
+                gridLines: {
+                  drawTicks: false,
+                  display: false,
+                },
+              },
+            ],
+            xAxes: [
+              {
+                gridLines: {
+                  zeroLineColor: "transparent",
+                },
+                ticks: {
+                  padding: 20,
+                  fontColor: "rgba(0,0,0,0.5)",
+                  fontStyle: "500",
+                },
+              },
+            ],
+          },
+          legendCallback: function (chart) {
+            var text = [];
+            text.push('<ul class="' + chart.id + '-legend html-legend">');
+            for (var i = 0; i < chart.data.datasets.length; i++) {
+              text.push(
+                '<li><span style="background-color:' +
+                  chart.data.datasets[i].legendColor +
+                  '"></span>'
+              );
+              if (chart.data.datasets[i].label) {
+                text.push(chart.data.datasets[i].label);
+              }
+              text.push("</li>");
+            }
+            text.push("</ul>");
+            return text.join("");
+          },
+        },
+      });
+
+      var myLegendContainer = document.getElementById("myChartLegend");
+
+      // generate HTML legend
+      myLegendContainer.innerHTML = myHtmlLegendsChart.generateLegend();
+
+      // bind onClick event to all LI-tags of the legend
+      var legendItems = myLegendContainer.getElementsByTagName("li");
+      for (var i = 0; i < legendItems.length; i += 1) {
+        legendItems[i].addEventListener("click", legendClickCallback, false);
+      }
+    </script>-->
+    <script>
+function groupProductsByPeriod(supplies) {
+  const daily = {};
+  const weekly = {};
+  const monthly = {};
+
+  // --- DAILY (last 7 days) ---
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date();
+    day.setDate(day.getDate() - i);
+    const label = day.toLocaleDateString();
+
+    daily[label] = {};
+    supplies
+      .filter(s => isSameDay(new Date(s.dateAdded), day))
+      .forEach(s => {
+        if (!daily[label][s.name]) daily[label][s.name] = 0;
+        daily[label][s.name] += parseInt(s.quantity) || 0;
+      });
+  }
+
+  // --- WEEKLY (last 4 weeks) ---
+  for (let i = 3; i >= 0; i--) {
+    const weekStart = getStartOfWeek(new Date());
+    weekStart.setDate(weekStart.getDate() - i * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+
+    weekly[label] = {};
+    supplies
+      .filter(s => new Date(s.dateAdded) >= weekStart && new Date(s.dateAdded) <= weekEnd)
+      .forEach(s => {
+        if (!weekly[label][s.name]) weekly[label][s.name] = 0;
+        weekly[label][s.name] += parseInt(s.quantity) || 0;
+      });
+  }
+
+  // --- MONTHLY (last 12 months) ---
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  for (let i = 11; i >= 0; i--) {
+    const month = new Date();
+    month.setMonth(month.getMonth() - i);
+
+    const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
+    monthly[label] = {};
+
+    supplies
+      .filter(s => {
+        const d = new Date(s.dateAdded);
+        return d.getMonth() === month.getMonth() && d.getFullYear() === month.getFullYear();
+      })
+      .forEach(s => {
+        if (!monthly[label][s.name]) monthly[label][s.name] = 0;
+        monthly[label][s.name] += parseInt(s.quantity) || 0;
+      });
+  }
+
+  return { daily, weekly, monthly };
+}
+</script>
+
+
+   <script>
+document.getElementById("printBtn").addEventListener("click", function (e) {
+  e.preventDefault();
+  generateSupplyReportPDF();
+});
+</script>
+
+<script>
+async function generateSupplyReportPDF(type) {
+  const { jsPDF } = window.jspdf;
+
+  // Fetch supplies
+  const response = await fetch("/api/supplies");
+  const supplies = await response.json();
+
+  // Group products
+  const grouped = groupProductsByPeriod(supplies);
+
+  // --- Build a temporary chart for the selected type ---
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;
+  canvas.height = 400;
+  const ctx = canvas.getContext("2d");
+
+  const chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: chartDataSets[type].labels,
+      datasets: [{
+        label: type === "daily" ? "Supplies Added (Daily)" :
+               type === "weekly" ? "Supplies Added (Weekly)" :
+               type === "monthly" ? "Supplies Added (Monthly)" :
+               "Supplies Added (Overall)",
+        backgroundColor: "#1d7af3",
+        borderColor: "#1d7af3",
+        borderWidth: 1,
+        data: chartDataSets[type].data || []
+      }]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // Wait until chart is rendered
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const chartImage = canvas.toDataURL("image/png");
+  chart.destroy();
+
+  // --- Start building PDF ---
+  const pdf = new jsPDF("landscape", "mm", "a4");
+  pdf.setFontSize(16);
+  pdf.text("Supply Report", 14, 15);
+
+  // Add chart (specific to selection)
+  const imgWidth = 280;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+  pdf.addImage(chartImage, "PNG", 10, 25, imgWidth, imgHeight);
+
+  // --- Helper to add tables only when data exists ---
+  function addTables(title, dataObj) {
+    const labelsWithData = Object.keys(dataObj).filter(
+      (label) => Object.keys(dataObj[label]).length > 0
+    );
+
+    if (labelsWithData.length === 0) return; // nothing to show
+
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.text(title, 14, 15);
+
+    labelsWithData.forEach((label) => {
+      const rows = Object.entries(dataObj[label]).map(([prod, qty]) => [prod, qty]);
+      pdf.autoTable({
+        head: [[label, "Quantity"]],
+        body: rows,
+        startY: pdf.lastAutoTable ? pdf.lastAutoTable.finalY + 10 : 25,
+        theme: "grid"
+      });
+    });
+  }
+
+  // --- Add breakdown based on type ---
+  if (type === "daily") addTables("Daily Breakdown", grouped.daily);
+  if (type === "weekly") addTables("Weekly Breakdown", grouped.weekly);
+  if (type === "monthly") addTables("Monthly Breakdown", grouped.monthly);
+
+  if (type === "overall") {
+    const totals = {};
+    supplies.forEach(s => {
+      if (!totals[s.name]) totals[s.name] = 0;
+      totals[s.name] += parseInt(s.quantity) || 0;
+    });
+
+    const rows = Object.entries(totals).map(([prod, qty]) => [prod, qty]);
+    if (rows.length > 0) {
+      pdf.addPage();
+      pdf.setFontSize(14);
+      pdf.text("Overall Product Summary", 14, 15);
+      pdf.autoTable({
+        head: [["Product", "Total Quantity"]],
+        body: rows,
+        startY: 25,
+        theme: "grid"
+      });
+    }
+  }
+
+  // Save with filename based on selection
+  pdf.save(`supply-report-${type}.pdf`);
+}
+</script>
+
+  </body>
+</html>

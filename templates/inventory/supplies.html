@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Supplies | Triple P Farms and Nursery</title>
+    <meta
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+      name="viewport"
+    />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='assets/img/triple-logo.jpg') }}"
+      type="image/x-icon"
+    />
+
+    <!-- Fonts and icons -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/webfont/webfont.min.js') }}"></script>
+    <script>
+      WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+          families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+          ],
+          urls: ["{{ url_for('static', filename='assets/css/fonts.min.css') }}"],
+        },
+        active: function () {
+          sessionStorage.fonts = true;
+        },
+      });
+    </script>
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/plugins.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/kaiadmin.min.css') }}" />
+
+    <!-- CSS Just for demo purpose, don't include it in your project -->
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <!-- Sidebar -->
+      <div class="sidebar" data-background-color="dark">
+        <div class="sidebar-logo">
+          <!-- Logo Header -->
+          <div class="logo-header" data-background-color="dark">
+            <a href="{{ url_for('dashboard') }}" class="logo">
+              <img
+                src="{{ url_for('static', filename='assets/img/triple-logo-dark2.jpg') }}"
+                alt="navbar brand"
+                class="navbar-brand"
+                height="20"
+              />
+            </a>
+            <div class="nav-toggle">
+              <button class="btn btn-toggle toggle-sidebar">
+                <i class="gg-menu-right"></i>
+              </button>
+              <button class="btn btn-toggle sidenav-toggler">
+                <i class="gg-menu-left"></i>
+              </button>
+            </div>
+            <button class="topbar-toggler more">
+              <i class="gg-more-vertical-alt"></i>
+            </button>
+          </div>
+          <!-- End Logo Header -->
+        </div>
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+          <div class="sidebar-content">
+            <ul class="nav nav-secondary">
+              <li class="nav-item">
+                <a
+                  href="{{ url_for('dashboard') }}"
+                >
+                  <i class="fas fa-home"></i>
+                  <p>Dashboard</p>
+                </a>
+              </li>
+              <li class="nav-section">
+                <span class="sidebar-mini-icon">
+                  <i class="fa fa-ellipsis-h"></i>
+                </span>
+                <h4 class="text-section">Components</h4>
+              </li>
+              <li class="nav-item active submenu">
+                <a data-bs-toggle="collapse" href="#tables">
+                  <i class="fas fa-boxes"></i>
+                  <p>Inventory</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse show" id="tables">
+                  <ul class="nav nav-collapse">
+                    <li class="active">
+                      <a href="{{ url_for('supplies') }}">
+                        <span class="sub-item">Supplies</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('equipment') }}">
+                        <span class="sub-item">Equipments</span>
+                      </a>
+                    </li>
+
+                  </ul>
+                </div>
+              </li>
+                            <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#tools">
+                  <i class="fas fa-toolbox"></i>
+                  <p>Borrowed Items</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="tools">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('tools') }}">
+                        <span class="sub-item">Approved</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#maps">
+                  <i class="fas fa-users"></i>
+                  <p>Farmers</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="maps">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('approved_farmers') }}">
+                        <span class="sub-item">Approved</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('pending_farmers') }}">
+                        <span class="sub-item">Waiting for Approval</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="nav-item">
+                <a href="{{ url_for('reports') }}">
+                  <i class="far fa-chart-bar"></i>
+                  <p>Reports</p>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- End Sidebar -->
+
+      <div class="main-panel">
+        <div class="main-header">
+          <div class="main-header-logo">
+            <!-- Logo Header -->
+            <div class="logo-header" data-background-color="dark">
+              <a href="{{ url_for('dashboard') }}" class="logo">
+                <img
+                  src="{{ url_for('static', filename='assets/img/triple-logo-dark2.jpg') }}"
+                  alt="navbar brand"
+                  class="navbar-brand"
+                  height="20"
+                />
+              </a>
+              <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                  <i class="gg-menu-right"></i>
+                </button>
+                <button class="btn btn-toggle sidenav-toggler">
+                  <i class="gg-menu-left"></i>
+                </button>
+              </div>
+              <button class="topbar-toggler more">
+                <i class="gg-more-vertical-alt"></i>
+              </button>
+            </div>
+            <!-- End Logo Header -->
+          </div>
+          <!-- Navbar Header -->
+          <nav
+            class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom"
+          >
+            <div class="container-fluid">
+              <nav
+                class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
+              >
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <button type="submit" class="btn btn-search pe-1">
+                      <i class="fa fa-search search-icon"></i>
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search ..."
+                    class="form-control"
+                  />
+                </div>
+              </nav>
+
+              <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+                <li
+                  class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none"
+                >
+                  <a
+                    class="nav-link dropdown-toggle"
+                    data-bs-toggle="dropdown"
+                    href="#"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <i class="fa fa-search"></i>
+                  </a>
+                  <ul class="dropdown-menu dropdown-search animated fadeIn">
+                    <form class="navbar-left navbar-form nav-search">
+                      <div class="input-group">
+                        <input
+                          type="text"
+                          placeholder="Search ..."
+                          class="form-control"
+                        />
+                      </div>
+                    </form>
+                  </ul>
+                </li>
+                <li class="nav-item topbar-icon dropdown hidden-caret">
+                  <a
+                    class="nav-link dropdown-toggle"
+                    href="#"
+                    id="messageDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    <i class="fa fa-envelope"></i>
+                  </a>
+                  <ul
+                    class="dropdown-menu messages-notif-box animated fadeIn"
+                    aria-labelledby="messageDropdown"
+                  >
+                    <li>
+                      <div
+                        class="dropdown-title d-flex justify-content-between align-items-center"
+                      >
+                        Messages
+                        <a href="#" class="small">Mark all as read</a>
+                      </div>
+                    </li>
+                    <li>
+                      <a class="see-all" href="javascript:void(0);"
+                        >See all messages<i class="fa fa-angle-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="nav-item topbar-icon dropdown hidden-caret">
+                  <a
+                    class="nav-link dropdown-toggle"
+                    href="#"
+                    id="notifDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    <i class="fa fa-bell"></i>
+                  </a>
+                  <ul
+                    class="dropdown-menu notif-box animated fadeIn"
+                    aria-labelledby="notifDropdown"
+                  >
+                    <li>
+                      <div class="dropdown-title">
+                        You have no new notification
+                      </div>
+                    </li>
+                    <li>
+                      <a class="see-all" href="javascript:void(0);"
+                        >See all notifications<i class="fa fa-angle-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+
+                <li class="nav-item topbar-user dropdown hidden-caret">
+                  <a
+                    class="dropdown-toggle profile-pic"
+                    data-bs-toggle="dropdown"
+                    href="#"
+                    aria-expanded="false"
+                  >
+                    <div class="avatar-sm">
+                      <img
+                        src="{{ url_for('static', filename='assets/img/default-profile3.png') }}"
+                        alt="..."
+                        class="avatar-img rounded-circle"
+                      />
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu dropdown-user animated fadeIn">
+                    <div class="dropdown-user-scroll scrollbar-outer">
+                      <li>
+                        <div class="user-box">
+                          <div class="avatar-lg">
+                            <img
+                              src="{{ url_for('static', filename='assets/img/default-profile3.png') }}"
+                              alt="image profile"
+                              class="avatar-img rounded"
+                            />
+                          </div>
+                          <div class="u-text">
+                            <h4>Admin</h4>
+                            <p class="text-muted">admin@example.com</p>
+                            <a
+                              href="profile.html"
+                              class="btn btn-xs btn-secondary btn-sm"
+                              >View Profile</a
+                            >
+                          </div>
+                        </div>
+                      </li>
+                      <li>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">My Profile</a>
+                        <a class="dropdown-item" href="#">Inbox</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Account Setting</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Logout</a>
+                      </li>
+                    </div>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </nav>
+          <!-- End Navbar -->
+        </div>
+
+        <div class="container">
+          <div class="page-inner">
+            <div class="page-header">
+              <h3 class="fw-bold mb-3">Supplies</h3>
+              <ul class="breadcrumbs mb-3">
+                <li class="nav-home">
+                  <a href="#">
+                    <i class="icon-home"></i>
+                  </a>
+                </li>
+                <li class="separator">
+                  <i class="icon-arrow-right"></i>
+                </li>
+                <li class="nav-item">
+                  <a href="#">Inventory</a>
+                </li>
+                <li class="separator">
+                  <i class="icon-arrow-right"></i>
+                </li>
+                <li class="nav-item">
+                  <a href="#">Supplies</a>
+                </li>
+
+              </ul>
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="d-flex align-items-center">
+                      <h4 class="card-title">Products</h4>
+                      <button
+                        class="btn btn-primary btn-round ms-auto"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addRowModal"
+                        onclick="openAddModal()"
+                      >
+                        <i class="fa fa-plus"></i>
+                        Product
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <!-- Modal -->
+<div class="modal fade" id="addSupplyModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="supplyModalTitle">
+          <span class="fw-mediumbold"> New</span>
+          <span class="fw-light"> Product/Item </span>
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="supplyForm">
+          <input type="hidden" id="supplyId">
+
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="form-group form-group-default">
+                <label>Product Name</label>
+                <input id="productName" type="text" class="form-control" required />
+              </div>
+            </div>
+
+            <div class="col-md-6 pe-0">
+              <div class="form-group form-group-default">
+                <label>Quantity</label>
+                <input id="productQuantity" type="number" min="0" class="form-control" required />
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="form-group form-group-default">
+                <label>Expiration Date</label>
+                <input id="expirationDate" type="date" class="form-control" required />
+              </div>
+            </div>
+
+            <!-- OUT QUANTITY (Only for edit) -->
+            <div class="col-md-12" id="outQuantityWrapper" style="display:none;">
+              <div class="form-group form-group-default">
+                <label>OUT Quantity</label>
+                <input id="outQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to remove" />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer border-0">
+            <button type="submit" id="submitBtn" class="btn btn-primary">Add</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- Toast Notification (Top Right) -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+  <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        ✅ Product added successfully!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<!--<script>
+  // Function to load and display supplies from the DB
+  async function loadSupplies() {
+    try {
+      const response = await fetch("/api/supplies");
+      const supplies = await response.json();
+      const tableBody = document.getElementById("suppliesTableBody");
+      tableBody.innerHTML = "";
+
+      supplies.forEach(supply => {
+        const row = `
+          <tr>
+            <td>${supply.name}</td>
+            <td>${supply.quantity}</td>
+            <td>${supply.expirationDate}</td>
+            <td>
+              <div class="form-button-action">
+                <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button type="button" class="btn btn-link btn-danger" title="Remove">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+    } catch (err) {
+      console.error("Error loading supplies:", err);
+    }
+  }
+
+  // Load supplies when page loads
+  document.addEventListener("DOMContentLoaded", loadSupplies);
+
+  // Handle form submit
+  document.getElementById("supplyForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const supply = {
+      name: document.getElementById("productName").value,
+      quantity: document.getElementById("productQuantity").value,
+      expirationDate: document.getElementById("expirationDate").value
+    };
+
+    try {
+      const response = await fetch("/inventory/supplies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(supply)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // ✅ Show Bootstrap Notify success message
+        $.notify(
+          {
+            icon: "fa fa-check-circle",
+            title: "Success",
+            message: "Product added successfully!"
+          },
+          {
+            type: "success",
+            placement: { from: "top", align: "right" },
+            delay: 3000,
+            timer: 1000,
+            z_index: 9999
+          }
+        );
+
+        // Reset form
+        document.getElementById("supplyForm").reset();
+
+        // Close modal
+        const modalEl = document.getElementById("addSupplyModal");
+        if (modalEl) {
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        }
+
+        // 🔄 Refresh table
+        loadSupplies();
+
+      } else {
+        $.notify(
+          {
+            icon: "fa fa-exclamation-triangle",
+            title: "Error",
+            message: result.message || "Something went wrong."
+          },
+          {
+            type: "danger",
+            placement: { from: "top", align: "right" },
+            delay: 3000,
+            timer: 1000,
+            z_index: 9999
+          }
+        );
+      }
+
+    } catch (err) {
+      console.error("Fetch failed:", err);
+      $.notify(
+        {
+          icon: "fa fa-exclamation-circle",
+          title: "Error",
+          message: "Network error. Please try again."
+        },
+        {
+          type: "danger",
+          placement: { from: "top", align: "right" },
+          delay: 3000,
+          timer: 1000,
+          z_index: 9999
+        }
+      );
+    }
+  });
+</script>--->
+
+                    <div class="table-responsive">
+  <!-- Filters go here 
+  <div id="supplies-filters" style="margin-bottom: 10px; display: flex; gap: 10px;"></div>-->
+
+  <table
+    id="add-row"
+    class="display table table-striped table-hover"
+  >
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Quantity</th>
+        <th>Expiration</th>
+        <th>QR Code</th>
+        <th style="width: 10%">Action</th>
+      </tr>
+    </thead>
+    <tbody id="suppliesTableBody"></tbody>
+  </table>
+</div>
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3 text-center">
+      <h5 class="mb-3" id="qrModalTitle">QR Code</h5>
+      <img id="qrModalImage" src="" alt="QR Code" style="width: 250px; height: 250px;" />
+    </div>
+  </div>
+</div>
+
+
+<script>
+let editingSupplyId = null; // Tracks if we're editing
+let suppliesTable; // DataTable instance
+
+// Load and display supplies
+async function loadSupplies() {
+  try {
+    const response = await fetch("/api/supplies");
+    const supplies = await response.json();
+
+    const tableBody = document.getElementById("suppliesTableBody");
+    tableBody.innerHTML = "";
+
+    if (!supplies.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align:center;">No data available</td>
+        </tr>
+      `;
+    } else {
+      supplies.forEach(supply => {
+        const row = `
+          <tr>
+  <td>${supply.name}</td>
+  <td>${supply.quantity}</td>
+  <td>${supply.expirationDate}</td>
+  <td>
+  <img 
+  src="/api/supply/${supply._id}/qrcode" 
+  alt="QR Code" 
+  width="60" 
+  height="60"
+  style="cursor: pointer;"
+  onclick="showQrModal('${supply.name}', '/api/supply/${supply._id}/qrcode')"
+/>
+
+</td>
+  <td>
+    <div class="form-button-action">
+      <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
+        onclick="startEditSupply('${supply._id}', '${supply.name}', '${supply.quantity}', '${supply.expirationDate}')">
+        <i class="fa fa-edit"></i>
+      </button>
+      <button type="button" class="btn btn-link btn-danger" title="Remove"
+        onclick="deleteSupply('${supply._id}')">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+  </td>
+</tr>
+
+        `;
+        tableBody.innerHTML += row;
+      });
+    }
+
+
+
+
+
+    // Destroy existing DataTable before re-init
+    if ($.fn.DataTable.isDataTable('#add-row')) {
+      suppliesTable.destroy();
+      $('#add-row').empty(); // clear old headers/DOM
+      // Rebuild table header
+      $('#add-row').append(`
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Expiration</th>
+            <th style="width: 10%">Action</th>
+          </tr>
+        </thead>
+        <tbody id="suppliesTableBody">
+          ${tableBody.innerHTML}
+        </tbody>
+      `);
+    }
+
+    // Initialize DataTable
+    suppliesTable = $('#add-row').DataTable({
+      pageLength: 5
+    });
+
+    // Create filters above the table (skip Action col)
+    const filtersDiv = $('#supplies-filters');
+    filtersDiv.empty(); // clear old filters
+    $('#add-row thead th').each(function(index) {
+      if (index === 3) return; // Skip Action column
+      const column = suppliesTable.column(index);
+      const select = $('<select class="form-select"><option value="">All</option></select>')
+        .appendTo(filtersDiv)
+        .on('change', function() {
+          const val = $.fn.dataTable.util.escapeRegex($(this).val());
+          column.search(val ? '^' + val + '$' : '', true, false).draw();
+        });
+
+      column.data().unique().sort().each(function(d) {
+        if (d) select.append('<option value="' + d + '">' + d + '</option>');
+      });
+    });
+
+  } catch (err) {
+    console.error("Error loading supplies:", err);
+  }
+}
+
+function startEditSupply(id, name, quantity, expirationDate) {
+  document.getElementById("supplyId").value = id;
+  document.getElementById("productName").value = name;
+  document.getElementById("productQuantity").value = quantity;
+  document.getElementById("expirationDate").value = expirationDate;
+
+  document.getElementById("outQuantityWrapper").style.display = "block";
+  document.getElementById("outQuantity").value = "";
+
+  document.getElementById("supplyModalTitle").innerHTML = '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Product/Item </span>';
+  document.getElementById("submitBtn").textContent = "Update";
+
+  $('#addSupplyModal').modal('show');
+}
+
+function openAddModal() {
+  document.getElementById("supplyForm").reset();
+  document.getElementById("supplyId").value = "";
+  document.getElementById("outQuantityWrapper").style.display = "none";
+
+  document.getElementById("supplyModalTitle").innerHTML = '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Product/Item </span>';
+  document.getElementById("submitBtn").textContent = "Add";
+
+  $('#addSupplyModal').modal('show');
+}
+
+async function deleteSupply(id) {
+  if (!confirm("Are you sure you want to delete this product?")) return;
+  try {
+    const response = await fetch(`/api/supplies/${id}`, { method: "DELETE" });
+    const result = await response.json();
+    if (response.ok) {
+      $.notify(
+        { icon: "fa fa-check-circle", title: "Deleted", message: "Product removed successfully!" },
+        { type: "success", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+      );
+      loadSupplies();
+    } else {
+      $.notify(
+        { icon: "fa fa-exclamation-triangle", title: "Error", message: result.message || "Failed to delete." },
+        { type: "danger", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+      );
+    }
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
+}
+
+document.getElementById("supplyForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const id = document.getElementById("supplyId").value;
+  const supply = {
+    name: document.getElementById("productName").value,
+    quantity: document.getElementById("productQuantity").value,
+    expirationDate: document.getElementById("expirationDate").value
+  };
+
+  if (id) {
+    const outQty = document.getElementById("outQuantity")?.value;
+    if (outQty) supply.outQuantity = outQty;
+  }
+
+  let url = "/inventory/supplies";
+  let method = "POST";
+  if (id) {
+    url = `/api/supplies/${id}`;
+    method = "PUT";
+  }
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(supply)
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      $.notify(
+        { icon: "fa fa-check-circle", title: "Success", message: id ? "Product updated successfully!" : "Product added successfully!" },
+        { type: "success", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+      );
+      $('#addSupplyModal').modal('hide');
+      loadSupplies();
+    } else {
+      $.notify(
+        { icon: "fa fa-exclamation-triangle", title: "Error", message: result.message || "Something went wrong." },
+        { type: "danger", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+      );
+    }
+  } catch (err) {
+    console.error("Fetch failed:", err);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", loadSupplies);
+</script>
+
+<script>
+function showQrModal(name, qrUrl) {
+  if (!qrUrl) {
+    alert("No QR Code available for this equipment.");
+    return;
+  }
+
+  document.getElementById("qrModalTitle").textContent = `${name} - QR Code`;
+  document.getElementById("qrModalImage").src = qrUrl;
+
+  const modal = new bootstrap.Modal(document.getElementById("qrModal"));
+  modal.show();
+}
+</script>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="container-fluid d-flex justify-content-between">
+            <div>
+              All rights reserved Triple P farms 2025
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <!-- Custom template | don't include it in your project! -->
+      <div class="custom-template">
+        <div class="title">Settings</div>
+        <div class="custom-content">
+          <div class="switcher">
+            <div class="switch-block">
+              <h4>Logo Header</h4>
+              <div class="btnSwitch">
+                <button
+                  type="button"
+                  class="selected changeLogoHeaderColor"
+                  data-color="dark"
+                ></button>
+                <button
+                  type="button"
+                  class="selected changeLogoHeaderColor"
+                  data-color="blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="purple"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="light-blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="green"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="orange"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="red"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="white"
+                ></button>
+                <br />
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="dark2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="purple2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="light-blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="green2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="orange2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeLogoHeaderColor"
+                  data-color="red2"
+                ></button>
+              </div>
+            </div>
+            <div class="switch-block">
+              <h4>Navbar Header</h4>
+              <div class="btnSwitch">
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="dark"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="purple"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="light-blue"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="green"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="orange"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="red"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="white"
+                ></button>
+                <br />
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="dark2"
+                ></button>
+                <button
+                  type="button"
+                  class="selected changeTopBarColor"
+                  data-color="blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="purple2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="light-blue2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="green2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="orange2"
+                ></button>
+                <button
+                  type="button"
+                  class="changeTopBarColor"
+                  data-color="red2"
+                ></button>
+              </div>
+            </div>
+            <div class="switch-block">
+              <h4>Sidebar</h4>
+              <div class="btnSwitch">
+                <button
+                  type="button"
+                  class="selected changeSideBarColor"
+                  data-color="white"
+                ></button>
+                <button
+                  type="button"
+                  class="changeSideBarColor"
+                  data-color="dark"
+                ></button>
+                <button
+                  type="button"
+                  class="changeSideBarColor"
+                  data-color="dark2"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="custom-toggle">
+          <i class="icon-settings"></i>
+        </div>
+      </div>
+      <!-- End Custom template -->
+    </div>
+    <!--   Core JS Files   -->
+    <script src="{{ url_for('static', filename='assets/js/core/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/core/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/core/bootstrap.min.js') }}"></script>
+
+    <!-- jQuery Scrollbar -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
+    <!-- Datatables -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/datatables/datatables.min.js') }}"></script>
+    <!-- Bootstrap Notify -->
+    <script src="{{ url_for('static', filename='assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
+
+    <!-- Kaiadmin JS -->
+    <script src="{{ url_for('static', filename='assets/js/kaiadmin.min.js') }}"></script>
+    <!-- Kaiadmin DEMO methods, don't include it in your project! -->
+    <script src="{{ url_for('static', filename='assets/js/setting-demo2.js') }}"></script>
+    <script>
+      $(document).ready(function () {
+        // Initialize DataTable
+    const table = $('#basic-datatables').DataTable({ pageLength: 5 });
+
+    // Create filters (above table)
+    $('#basic-datatables thead th').each(function(index) {
+      if (index === 6) return; // Skip QR Code column
+      const column = table.column(index);
+      const select = $('<select class="form-select"><option value="">All</option></select>')
+        .appendTo($('#filters'))
+        .on('change', function() {
+          const val = $.fn.dataTable.util.escapeRegex($(this).val());
+          column.search(val ? '^' + val + '$' : '', true, false).draw();
+        });
+
+      column.data().unique().sort().each(function(d) {
+        if (d) select.append('<option value="' + d + '">' + d + '</option>');
+      });
+    });
+  })
+  .catch(err => console.error(err));
+
+        // Add Row
+        $("#add-row").DataTable({
+          pageLength: 5,
+        });
+
+        var action =
+          '<td> <div class="form-button-action"> <button type="button" data-bs-toggle="tooltip" title="" class="btn btn-link btn-primary btn-lg" data-original-title="Edit Task"> <i class="fa fa-edit"></i> </button> <button type="button" data-bs-toggle="tooltip" title="" class="btn btn-link btn-danger" data-original-title="Remove"> <i class="fa fa-times"></i> </button> </div> </td>';
+
+        $("#addRowButton").click(function () {
+          $("#add-row")
+            .dataTable()
+            .fnAddData([
+              $("#addName").val(),
+              $("#addPosition").val(),
+              $("#addOffice").val(),
+              action,
+            ]);
+          $("#addRowModal").modal("hide");
+        });
+      });
+    </script>
+  </body>
+</html>
