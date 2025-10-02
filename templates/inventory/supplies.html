@@ -613,10 +613,20 @@
     <div class="modal-content p-3 text-center">
       <h5 class="mb-3" id="qrModalTitle">QR Code</h5>
       <img id="qrModalImage" src="" alt="QR Code" style="width: 250px; height: 250px;" />
+      <button id="downloadQrBtn" class="btn btn-primary mt-3">Export Image</button>
     </div>
   </div>
 </div>
 
+<script>
+  document.getElementById("downloadQrBtn").addEventListener("click", function () {
+    const qrImg = document.getElementById("qrModalImage");
+    const link = document.createElement("a");
+    link.href = qrImg.src;
+    link.download = "qr-code.png"; // filename for download
+    link.click();
+  });
+</script>
 
 <script>
 let editingSupplyId = null; // Tracks if we're editing

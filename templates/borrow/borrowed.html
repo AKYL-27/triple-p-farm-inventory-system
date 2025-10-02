@@ -415,10 +415,26 @@
       <div class="modal-body text-center">
         <img id="qrModalImage" src="" style="width:200px; height:200px;" />
         <div id="qrModalDetails" style="margin-top: 10px;"></div>
+        <button id="downloadQrBtn" class="btn btn-primary mt-3">Export Image</button>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.getElementById("downloadQrBtn").addEventListener("click", function () {
+    const qrImg = document.getElementById("qrModalImage");
+    const link = document.createElement("a");
+    link.href = qrImg.src;
+
+    // Use modal title as filename (default to "qr-code.png")
+    const title = document.getElementById("qrModalTitle").textContent || "qr-code";
+    link.download = title.replace(/\s+/g, "_") + ".png";
+
+    link.click();
+  });
+</script>
+
                 </div>
               </div>
 
