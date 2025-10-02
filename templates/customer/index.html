@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triple P Farms Nursery - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #2c6f3f 0%, #1a5a30 100%);
+            color: white;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-placeholder {
+            width: 180px;
+            height: 180px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .logo-placeholder i {
+            font-size: 72px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .tagline {
+            font-size: 18px;
+            margin-top: 15px;
+            opacity: 0.9;
+            font-weight: 300;
+            text-align: center;
+        }
+
+        .features {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .feature i {
+            font-size: 20px;
+            margin-right: 15px;
+            min-width: 30px;
+            color: #a8d8b9;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .admin-header {
+            margin-bottom: 40px;
+        }
+
+        .admin-title {
+            font-size: 32px;
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .admin-subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #2c6f3f 0%, #1a5a30 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(44, 111, 63, 0.3);
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(44, 111, 63, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 30px;
+            color: #95a5a6;
+            font-size: 14px;
+        }
+
+        /* Decorative elements */
+        .leaf {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.1);
+            font-size: 120px;
+            z-index: 0;
+        }
+
+        .leaf-1 {
+            top: 20px;
+            left: 20px;
+            transform: rotate(-20deg);
+        }
+
+        .leaf-2 {
+            bottom: 20px;
+            right: 20px;
+            transform: rotate(30deg);
+        }
+
+        /* Responsive design */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .left-panel, .right-panel {
+                padding: 40px 30px;
+            }
+            
+            .logo-placeholder {
+                width: 140px;
+                height: 140px;
+            }
+            
+            .logo-text {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="leaf leaf-1">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <div class="leaf leaf-2">
+                <i class="fas fa-seedling"></i>
+            </div>
+            
+            <div class="logo-container">
+    <img src="assets/img/triple-logo.jpg" alt="Triple P Farms Logo" class="logo-image">
+    <h1 class="logo-text">TRIPLE P FARMS</h1>
+    <p class="tagline">Premium Nursery Solutions</p>
+</div>
+            
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Inventory Management</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Order Processing</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Customer Analytics</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Plant Health Monitoring</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="admin-header">
+                <h2 class="admin-title">Admin Portal</h2>
+                <p class="admin-subtitle">Secure access to manage your nursery operations, inventory, and customer data.</p>
+            </div>
+            
+            <button class="login-btn" href="/login">
+                <i class="fas fa-sign-in-alt"></i> Admin Login
+            </button>
+            
+            <p class="footer-note">© 2023 Triple P Farms Nursery. All rights reserved.</p>
+        </div>
+    </div>
+
+
+</body>
+</html>
