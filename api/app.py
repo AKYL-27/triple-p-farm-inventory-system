@@ -47,7 +47,7 @@ print("Connected to DB:", DB_NAME)
 
 @app.route("/")
 def landing():
-    return send_from_directory(".", "index.html")
+    render_template("index.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
