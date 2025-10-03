@@ -45,11 +45,8 @@ users_collection = db[USERS_COLLECTION]
 
 print("Connected to DB:", DB_NAME)
 
-@app.route("/")
-def landing():
-    render_template("index.html")
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form.get("username")
