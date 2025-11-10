@@ -369,7 +369,136 @@ def update_supply(supply_id):
 
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-    
+
+# Add these new endpoints to your Flask backend
+
+@app.route('/api/supply/<supply_id>/stock', methods=['PUT'])
+def update_supply_stock(supply_id):
+    try:
+        data = request.get_json()
+        quantity = int(data.get("quantity", 0))
+        transaction_type = data.get("transactionType")  # "stock-in" or "stock-out"
+
+        if quantity <= 0:
+            return jsonify({"message": "Quantity must be positive"}), 400
+
+        if transaction_type not in ["stock-in", "stock-out"]:
+            return jsonify({"message": "Invalid transaction type"}), 400
+
+        # Get current supply
+        current_supply = supplies_collection.find_one({"_id": ObjectId(supply_id)})
+        if not current_supply:
+            return jsonify({"message": "Supply not found"}), 404
+
+        current_quantity = current_supply.get("quantity", 0)
+
+        # Calculate new quantity
+        if transaction_type == "stock-in":
+            new_quantity = current_quantity + quantity
+            message = f"Successfully added {quantity} units. New quantity: {new_quantity}"
+        else:  # stock-out
+            if quantity > current_quantity:
+                return jsonify({"message": "Insufficient stock"}), 400
+            new_quantity = current_quantity - quantity
+            message = f"Successfully removed {quantity} units. New quantity: {new_quantity}"
+
+        # Update the supply
+        update_data = {
+            "quantity": new_quantity,
+            "transactionType": transaction_type.upper().replace("-", "_"),
+            "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        result = supplies_collection.update_one(
+            {"_id": ObjectId(supply_id)},
+            {"$set": update_data}
+        )
+
+        if result.modified_count:
+            # Get updated supply
+            updated_supply = supplies_collection.find_one({"_id": ObjectId(supply_id)})
+            updated_supply["_id"] = str(updated_supply["_id"])
+            
+            return jsonify({
+                "message": message,
+                "supply": updated_supply
+            }), 200
+        else:
+            return jsonify({"message": "No changes made"}), 200
+
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+
+@app.route('/api/equipment/<equipment_id>/stock', methods=['PUT'])
+def update_equipment_stock(equipment_id):
+    try:
+        data = request.get_json()
+        quantity = int(data.get("quantity", 0))
+        transaction_type = data.get("transactionType")  # "stock-in" or "stock-out"
+
+        if quantity <= 0:
+            return jsonify({"message": "Quantity must be positive"}), 400
+
+        if transaction_type not in ["stock-in", "stock-out"]:
+            return jsonify({"message": "Invalid transaction type"}), 400
+
+        # Get current equipment
+        current_equipment = equipment_collection.find_one({"_id": ObjectId(equipment_id)})
+        if not current_equipment:
+            return jsonify({"message": "Equipment not found"}), 404
+
+        current_quantity = current_equipment.get("quantity", 0)
+
+        # Calculate new quantity
+        if transaction_type == "stock-in":
+            new_quantity = current_quantity + quantity
+            message = f"Successfully added {quantity} units. New quantity: {new_quantity}"
+        else:  # stock-out
+            if quantity > current_quantity:
+                return jsonify({"message": "Insufficient stock"}), 400
+            new_quantity = current_quantity - quantity
+            message = f"Successfully removed {quantity} units. New quantity: {new_quantity}"
+
+        # Update the equipment
+        update_data = {
+            "quantity": new_quantity,
+            "transactionType": transaction_type.upper().replace("-", "_"),
+            "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # Update lastUsed if stock-out
+        if transaction_type == "stock-out":
+            update_data["lastUsed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Optionally increment borrow count
+            equipment_collection.update_one(
+                {"_id": ObjectId(equipment_id)},
+                {"$inc": {"totalBorrowCount": 1}}
+            )
+
+        result = equipment_collection.update_one(
+            {"_id": ObjectId(equipment_id)},
+            {"$set": update_data}
+        )
+
+        if result.modified_count or transaction_type == "stock-out":
+            # Get updated equipment
+            updated_equipment = equipment_collection.find_one({"_id": ObjectId(equipment_id)})
+            updated_equipment["_id"] = str(updated_equipment["_id"])
+            
+            return jsonify({
+                "message": message,
+                "equipment": updated_equipment
+            }), 200
+        else:
+            return jsonify({"message": "No changes made"}), 200
+
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+
 # Generate QR for a specific supply by ID
 @app.route('/api/supply/<supply_id>/qrcode', methods=['GET'])
 def generate_supply_qr(supply_id):
