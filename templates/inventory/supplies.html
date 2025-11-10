@@ -599,6 +599,7 @@
       <tr>
         <th>Product Name</th>
         <th>Quantity</th>
+        <th>Unit Price</th>
         <th>Expiration</th>
         <th>QR Code</th>
         <th style="width: 10%">Action</th>
@@ -644,49 +645,44 @@ async function loadSupplies() {
     if (!supplies.length) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="4" style="text-align:center;">No data available</td>
+          <td colspan="6" style="text-align:center;">No data available</td>
         </tr>
       `;
     } else {
       supplies.forEach(supply => {
         const row = `
           <tr>
-  <td>${supply.name}</td>
-  <td>${supply.quantity}</td>
-  <td>${supply.expirationDate}</td>
-  <td>
-  <img 
-  src="/api/supply/${supply._id}/qrcode" 
-  alt="QR Code" 
-  width="60" 
-  height="60"
-  style="cursor: pointer;"
-  onclick="showQrModal('${supply.name}', '/api/supply/${supply._id}/qrcode')"
-/>
-
-</td>
-  <td>
-    <div class="form-button-action">
-      <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-        onclick="startEditSupply('${supply._id}', '${supply.name}', '${supply.quantity}', '${supply.expirationDate}')">
-        <i class="fa fa-edit"></i>
-      </button>
-      <button type="button" class="btn btn-link btn-danger" title="Remove"
-        onclick="deleteSupply('${supply._id}')">
-        <i class="fa fa-times"></i>
-      </button>
-    </div>
-  </td>
-</tr>
-
+            <td>${supply.name}</td>
+            <td>${supply.quantity}</td>
+            <td>₱${supply.unitPrice ? parseFloat(supply.unitPrice).toFixed(2) : '0.00'}</td>
+            <td>${supply.expirationDate}</td>
+            <td>
+              <img 
+                src="/api/supply/${supply._id}/qrcode" 
+                alt="QR Code" 
+                width="60" 
+                height="60"
+                style="cursor: pointer;"
+                onclick="showQrModal('${supply.name}', '/api/supply/${supply._id}/qrcode')"
+              />
+            </td>
+            <td>
+              <div class="form-button-action">
+                <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
+                  onclick="startEditSupply('${supply._id}', '${supply.name}', '${supply.quantity}', '${supply.unitPrice || 0}', '${supply.expirationDate}')">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button type="button" class="btn btn-link btn-danger" title="Remove"
+                  onclick="deleteSupply('${supply._id}')">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
         `;
         tableBody.innerHTML += row;
       });
     }
-
-
-
-
 
     // Destroy existing DataTable before re-init
     if ($.fn.DataTable.isDataTable('#add-row')) {
@@ -698,7 +694,9 @@ async function loadSupplies() {
           <tr>
             <th>Product Name</th>
             <th>Quantity</th>
+            <th>Unit Price</th>
             <th>Expiration</th>
+            <th>QR Code</th>
             <th style="width: 10%">Action</th>
           </tr>
         </thead>
@@ -713,11 +711,11 @@ async function loadSupplies() {
       pageLength: 5
     });
 
-    // Create filters above the table (skip Action col)
+    // Create filters above the table (skip QR Code and Action col)
     const filtersDiv = $('#supplies-filters');
     filtersDiv.empty(); // clear old filters
     $('#add-row thead th').each(function(index) {
-      if (index === 3) return; // Skip Action column
+      if (index === 4 || index === 5) return; // Skip QR Code and Action columns
       const column = suppliesTable.column(index);
       const select = $('<select class="form-select"><option value="">All</option></select>')
         .appendTo(filtersDiv)
@@ -736,10 +734,11 @@ async function loadSupplies() {
   }
 }
 
-function startEditSupply(id, name, quantity, expirationDate) {
+function startEditSupply(id, name, quantity, unitPrice, expirationDate) {
   document.getElementById("supplyId").value = id;
   document.getElementById("productName").value = name;
   document.getElementById("productQuantity").value = quantity;
+  document.getElementById("unitPrice").value = unitPrice;
   document.getElementById("expirationDate").value = expirationDate;
 
   document.getElementById("outQuantityWrapper").style.display = "block";
@@ -791,6 +790,7 @@ document.getElementById("supplyForm").addEventListener("submit", async function 
   const supply = {
     name: document.getElementById("productName").value,
     quantity: document.getElementById("productQuantity").value,
+    unitPrice: document.getElementById("unitPrice").value,
     expirationDate: document.getElementById("expirationDate").value
   };
 
