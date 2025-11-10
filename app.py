@@ -302,19 +302,21 @@ def get_farmers():
         del f["password"]  # Don't expose password hashes
     return jsonify(farmers)
 
-# Create supply
+#  Create supply
 @app.route('/inventory/supplies', methods=['POST'])
 def insert_supply():
     data = request.get_json()
     supply = {
         "name": data.get("name"),
         "quantity": int(data.get("quantity")),
+        "unitPrice": float(data.get("unitPrice", 0)),
         "expirationDate": data.get("expirationDate"),
         "dateAdded": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "transactionType": "IN"  # Always IN for adding
     }
     result = supplies_collection.insert_one(supply)
     return jsonify({"message": "Supply added", "id": str(result.inserted_id)})
+
 
 @app.route('/api/supply/<supply_id>', methods=['GET'])
 def get_supply(supply_id):
@@ -345,28 +347,27 @@ def get_supplies():
 def update_supply(supply_id):
     try:
         data = request.get_json()
-
         update_data = {
             "name": data.get("name"),
             "quantity": int(data.get("quantity")),
+            "unitPrice": float(data.get("unitPrice", 0)),
             "expirationDate": data.get("expirationDate"),
             "transactionType": "OUT" if data.get("outQuantity") else "IN",  # OUT if outQuantity is provided
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-
+        
         # If OUT, subtract from quantity
         if data.get("outQuantity"):
             out_qty = int(data["outQuantity"])
             current_supply = supplies_collection.find_one({"_id": ObjectId(supply_id)})
             if current_supply:
                 update_data["quantity"] = max(0, current_supply["quantity"] - out_qty)
-
+        
         result = supplies_collection.update_one({"_id": ObjectId(supply_id)}, {"$set": update_data})
         if result.modified_count:
             return jsonify({"message": "Supply updated"}), 200
         else:
             return jsonify({"message": "No changes made"}), 200
-
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
