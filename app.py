@@ -914,38 +914,41 @@ def check_supply():
     try:
         # Get product name from query parameter
         product_name = request.args.get("name")
-
         if not product_name:
             return jsonify({
                 "status": "error",
                 "message": "Please provide a product name."
             }), 400
-
-        # Find supply by name (case-insensitive)
+        
+        # Find supply by name (case-insensitive) - include unitPrice in projection
         supply = supplies_collection.find_one(
             {"name": {"$regex": f"^{product_name}$", "$options": "i"}}, 
-            {"name": 1, "quantity": 1}
+            {"name": 1, "quantity": 1, "unitPrice": 1}
         )
-
+        
         if not supply:
             return jsonify({
                 "status": "ok",
                 "message": f"Sorry, '{product_name}' is not found in the inventory."
             }), 200
-
+        
         qty = supply.get("quantity", 0)
-
+        unit_price = supply.get("unitPrice", 0)
+        
+        # Format unit price to 2 decimal places
+        price_str = f"₱{float(unit_price):.2f}"
+        
         if qty > 0:
             return jsonify({
                 "status": "ok",
-                "message": f"Yes, {supply['name']} is available. Stock: {qty}."
+                "message": f"Yes, {supply['name']} is available. Stock: {qty}. Unit Price: {price_str}."
             }), 200
         else:
             return jsonify({
                 "status": "ok",
-                "message": f"Sorry, {supply['name']} is currently out of stock."
+                "message": f"Sorry, {supply['name']} is currently out of stock. Unit Price: {price_str}."
             }), 200
-
+            
     except Exception as e:
         return jsonify({
             "status": "error",
