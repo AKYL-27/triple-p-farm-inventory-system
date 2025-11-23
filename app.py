@@ -347,30 +347,66 @@ def get_supplies():
 def update_supply(supply_id):
     try:
         data = request.get_json()
+        
+        # Get current supply data
+        current_supply = supplies_collection.find_one({"_id": ObjectId(supply_id)})
+        if not current_supply:
+            return jsonify({"message": "Supply not found"}), 404
+        
+        # Start with the base quantity from the form
+        new_quantity = int(data.get("quantity"))
+        
+        # Determine transaction type based on what's provided
+        transaction_type = None
+        
+        # Handle IN quantity (add to current quantity)
+        if data.get("inQuantity"):
+            in_qty = int(data["inQuantity"])
+            if in_qty > 0:
+                new_quantity = current_supply["quantity"] + in_qty
+                transaction_type = "IN"
+        
+        # Handle OUT quantity (subtract from current quantity)
+        if data.get("outQuantity"):
+            out_qty = int(data["outQuantity"])
+            if out_qty > 0:
+                new_quantity = max(0, current_supply["quantity"] - out_qty)
+                transaction_type = "OUT"
+        
+        # If both IN and OUT are provided, calculate net change
+        if data.get("inQuantity") and data.get("outQuantity"):
+            in_qty = int(data["inQuantity"])
+            out_qty = int(data["outQuantity"])
+            net_change = in_qty - out_qty
+            new_quantity = max(0, current_supply["quantity"] + net_change)
+            transaction_type = "IN" if net_change > 0 else "OUT" if net_change < 0 else "ADJUSTED"
+        
+        # If no IN/OUT quantity provided, use the quantity from the form directly
+        if not data.get("inQuantity") and not data.get("outQuantity"):
+            transaction_type = "UPDATED"
+        
         update_data = {
             "name": data.get("name"),
-            "quantity": int(data.get("quantity")),
+            "quantity": new_quantity,
             "unitPrice": float(data.get("unitPrice", 0)),
             "expirationDate": data.get("expirationDate"),
-            "transactionType": "OUT" if data.get("outQuantity") else "IN",  # OUT if outQuantity is provided
+            "transactionType": transaction_type,
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
-        # If OUT, subtract from quantity
-        if data.get("outQuantity"):
-            out_qty = int(data["outQuantity"])
-            current_supply = supplies_collection.find_one({"_id": ObjectId(supply_id)})
-            if current_supply:
-                update_data["quantity"] = max(0, current_supply["quantity"] - out_qty)
+        result = supplies_collection.update_one(
+            {"_id": ObjectId(supply_id)}, 
+            {"$set": update_data}
+        )
         
-        result = supplies_collection.update_one({"_id": ObjectId(supply_id)}, {"$set": update_data})
         if result.modified_count:
-            return jsonify({"message": "Supply updated"}), 200
+            return jsonify({"message": "Supply updated successfully"}), 200
         else:
             return jsonify({"message": "No changes made"}), 200
+            
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-
+        
 # Add these new endpoints to your Flask backend
 
 @app.route('/api/supply/<supply_id>/stock', methods=['PUT'])
