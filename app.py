@@ -667,26 +667,61 @@ def get_equipment():
 def update_equipment(equipment_id):
     try:
         data = request.get_json()
+        
+        # Get current equipment data
         current_equipment = equipment_collection.find_one({"_id": ObjectId(equipment_id)})
         if not current_equipment:
             return jsonify({"message": "Equipment not found"}), 404
-
+        
+        # Start with the base quantity from the form
+        new_quantity = int(data.get("quantity", current_equipment["quantity"]))
+        
+        # Determine transaction type based on what's provided
+        transaction_type = "ADMIN_UPDATE"
+        
+        # Handle IN quantity (add to current quantity)
+        if data.get("inQuantity"):
+            in_qty = int(data["inQuantity"])
+            if in_qty > 0:
+                new_quantity = current_equipment["quantity"] + in_qty
+                transaction_type = "IN"
+        
+        # Handle OUT quantity (subtract from current quantity)
+        if data.get("outQuantity"):
+            out_qty = int(data["outQuantity"])
+            if out_qty > 0:
+                new_quantity = max(0, current_equipment["quantity"] - out_qty)
+                transaction_type = "OUT"
+        
+        # If both IN and OUT are provided, calculate net change
+        if data.get("inQuantity") and data.get("outQuantity"):
+            in_qty = int(data["inQuantity"])
+            out_qty = int(data["outQuantity"])
+            net_change = in_qty - out_qty
+            new_quantity = max(0, current_equipment["quantity"] + net_change)
+            transaction_type = "IN" if net_change > 0 else "OUT" if net_change < 0 else "ADJUSTED"
+        
         update_data = {
             "name": data.get("name", current_equipment["name"]),
-            "quantity": int(data.get("quantity", current_equipment["quantity"])),
-            "transactionType": "ADMIN_UPDATE",
+            "quantity": new_quantity,
+            "transactionType": transaction_type,
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-
-        # Optional: handle OUT quantity if provided
-        if "outQuantity" in data:
-            update_data["quantity"] = current_equipment["quantity"] - int(data["outQuantity"])
-            update_data["lastUsed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            update_data["totalBorrowCount"] = current_equipment.get("totalBorrowCount", 0) + int(data["outQuantity"])
-
-        equipment_collection.update_one({"_id": ObjectId(equipment_id)}, {"$set": update_data})
+        
+        # Update lastUsed and totalBorrowCount only when OUT quantity is used
+        if data.get("outQuantity"):
+            out_qty = int(data["outQuantity"])
+            if out_qty > 0:
+                update_data["lastUsed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                update_data["totalBorrowCount"] = current_equipment.get("totalBorrowCount", 0) + out_qty
+        
+        equipment_collection.update_one(
+            {"_id": ObjectId(equipment_id)}, 
+            {"$set": update_data}
+        )
+        
         return jsonify({"message": "Equipment updated successfully"}), 200
-
+        
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
