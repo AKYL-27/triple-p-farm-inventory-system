@@ -673,33 +673,39 @@ def update_equipment(equipment_id):
         if not current_equipment:
             return jsonify({"message": "Equipment not found"}), 404
         
-        # Start with the base quantity from the form
-        new_quantity = int(data.get("quantity", current_equipment["quantity"]))
-        
         # Determine transaction type based on what's provided
         transaction_type = "ADMIN_UPDATE"
+        new_quantity = current_equipment["quantity"]  # Start with current quantity
+        
+        # Check if IN or OUT quantities are provided
+        has_in = data.get("inQuantity") and str(data.get("inQuantity")).strip() != ""
+        has_out = data.get("outQuantity") and str(data.get("outQuantity")).strip() != ""
         
         # Handle IN quantity (add to current quantity)
-        if data.get("inQuantity"):
+        if has_in:
             in_qty = int(data["inQuantity"])
             if in_qty > 0:
                 new_quantity = current_equipment["quantity"] + in_qty
                 transaction_type = "IN"
         
         # Handle OUT quantity (subtract from current quantity)
-        if data.get("outQuantity"):
+        if has_out:
             out_qty = int(data["outQuantity"])
             if out_qty > 0:
                 new_quantity = max(0, current_equipment["quantity"] - out_qty)
                 transaction_type = "OUT"
         
         # If both IN and OUT are provided, calculate net change
-        if data.get("inQuantity") and data.get("outQuantity"):
+        if has_in and has_out:
             in_qty = int(data["inQuantity"])
             out_qty = int(data["outQuantity"])
             net_change = in_qty - out_qty
             new_quantity = max(0, current_equipment["quantity"] + net_change)
             transaction_type = "IN" if net_change > 0 else "OUT" if net_change < 0 else "ADJUSTED"
+        
+        # If neither IN nor OUT provided, use the quantity from the form (manual edit)
+        if not has_in and not has_out:
+            new_quantity = int(data.get("quantity", current_equipment["quantity"]))
         
         update_data = {
             "name": data.get("name", current_equipment["name"]),
@@ -709,7 +715,7 @@ def update_equipment(equipment_id):
         }
         
         # Update lastUsed and totalBorrowCount only when OUT quantity is used
-        if data.get("outQuantity"):
+        if has_out and data.get("outQuantity"):
             out_qty = int(data["outQuantity"])
             if out_qty > 0:
                 update_data["lastUsed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
