@@ -461,12 +461,21 @@
                                 </div>
                               </div>
 
-                              <div class="col-md-6" id="equipmentOutWrapper" style="display:none;">
-                                <div class="form-group form-group-default">
-                                  <label>OUT Quantity</label>
-                                  <input id="equipmentOutQuantity" type="number" min="0" class="form-control" placeholder="Enter OUT quantity" />
-                                </div>
-                              </div>
+                              <!-- IN QUANTITY (Only for edit) -->
+<div class="col-md-6" id="equipmentInWrapper" style="display:none;">
+  <div class="form-group form-group-default">
+    <label>IN Quantity</label>
+    <input id="equipmentInQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to add" />
+  </div>
+</div>
+
+<!-- OUT QUANTITY (Only for edit) -->
+<div class="col-md-6" id="equipmentOutWrapper" style="display:none;">
+  <div class="form-group form-group-default">
+    <label>OUT Quantity</label>
+    <input id="equipmentOutQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to remove" />
+  </div>
+</div>
 
                           <!--   <div class="col-md-6">
                                 <div class="form-group form-group-default">
@@ -569,83 +578,98 @@
 
   // Load and display equipment
   async function loadEquipment() {
-  try {
-    const response = await fetch("/api/equipment");
-    const equipmentList = await response.json();
+    try {
+      const response = await fetch("/api/equipment");
+      const equipmentList = await response.json();
 
-    const tableBody = document.getElementById("equipmentTableBody");
-    tableBody.innerHTML = "";
+      const tableBody = document.getElementById("equipmentTableBody");
+      tableBody.innerHTML = "";
 
-    equipmentList.forEach(eq => {
-  // Determine status
-  let status = "Unused";
-  if (eq.lastUsed) {
-    const lastUsedDate = new Date(eq.lastUsed);
-    const today = new Date();
-    // Example: mark as Used if last used within the last 30 days
-    const diffDays = (today - lastUsedDate) / (1000 * 60 * 60 * 24);
-    status = diffDays <= 30 ? "Used" : "Unused";
+      equipmentList.forEach(eq => {
+        // Determine status
+        let status = "Unused";
+        if (eq.lastUsed) {
+          const lastUsedDate = new Date(eq.lastUsed);
+          const today = new Date();
+          // Example: mark as Used if last used within the last 30 days
+          const diffDays = (today - lastUsedDate) / (1000 * 60 * 60 * 24);
+          status = diffDays <= 30 ? "Used" : "Unused";
+        }
+
+        const row = `
+          <tr>
+            <td>${eq.name}</td>
+            <td>${eq.quantity}</td>
+            <td>
+              ${eq.qrCode 
+                ? `<img src="data:image/png;base64, ${eq.qrCode}" 
+                         alt="QR Code" 
+                         style="width:50px; height:50px; cursor:pointer;" 
+                         onclick="showQrModal('${eq.name}', '${eq.qrCode}')">`
+                : `<span class="text-muted">No QR</span>`}
+            </td>
+            <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
+            <td>${eq.totalBorrowCount || 0}</td>
+            <td>${status}</td>
+            <td>
+              <div class="form-button-action">
+                <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
+                  onclick="startEditEquipment('${eq._id}', '${eq.name}', '${eq.quantity}')">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button type="button" class="btn btn-link btn-danger" title="Remove"
+                  onclick="deleteEquipment('${eq._id}')">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+
+    } catch (err) {
+      console.error("Error loading equipment:", err);
+    }
   }
-
-  const row = `
-    <tr>
-      <td>${eq.name}</td>
-      <td>${eq.quantity}</td>
-      <td>
-        ${eq.qrCode 
-          ? `<img src="data:image/png;base64, ${eq.qrCode}" 
-                   alt="QR Code" 
-                   style="width:50px; height:50px; cursor:pointer;" 
-                   onclick="showQrModal('${eq.name}', '${eq.qrCode}')">`
-          : `<span class="text-muted">No QR</span>`}
-      </td>
-      <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
-      <td>${eq.totalBorrowCount || 0}</td>
-      <td>${status}</td>
-      <td>
-        <div class="form-button-action">
-          <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-            onclick="startEditEquipment('${eq._id}', '${eq.name}', '${eq.quantity}')">
-            <i class="fa fa-edit"></i>
-          </button>
-          <button type="button" class="btn btn-link btn-danger" title="Remove"
-            onclick="deleteEquipment('${eq._id}')">
-            <i class="fa fa-times"></i>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `;
-  tableBody.innerHTML += row;
-});
-
-  } catch (err) {
-    console.error("Error loading equipment:", err);
-  }
-}
-
 
   function startEditEquipment(id, name, quantity) {
-  document.getElementById("equipmentId").value = id;
-  document.getElementById("equipmentName").value = name;
-  document.getElementById("equipmentQuantity").value = quantity;
+    document.getElementById("equipmentId").value = id;
+    document.getElementById("equipmentName").value = name;
+    document.getElementById("equipmentQuantity").value = quantity;
 
-  // Show OUT quantity in edit mode
-  document.getElementById("equipmentOutWrapper").style.display = "block";
-  document.getElementById("equipmentOutQuantity").value = "";
+    // Show both IN and OUT quantity in edit mode
+    document.getElementById("equipmentInWrapper").style.display = "block";
+    document.getElementById("equipmentOutWrapper").style.display = "block";
+    document.getElementById("equipmentInQuantity").value = "";
+    document.getElementById("equipmentOutQuantity").value = "";
 
-  document.getElementById("equipmentModalTitle").innerHTML =
-    '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Tool/Equipment </span>';
-  document.getElementById("equipmentSubmitBtn").textContent = "Update";
+    // Make quantity field read-only during edit
+    document.getElementById("equipmentQuantity").readOnly = true;
+    if (document.getElementById("equipmentQuantityHint")) {
+      document.getElementById("equipmentQuantityHint").style.display = "block";
+    }
 
-  $('#addEquipmentModal').modal('show');
-}
+    document.getElementById("equipmentModalTitle").innerHTML =
+      '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Tool/Equipment </span>';
+    document.getElementById("equipmentSubmitBtn").textContent = "Update";
 
+    $('#addEquipmentModal').modal('show');
+  }
 
   function openAddEquipmentModal() {
     document.getElementById("equipmentForm").reset();
     document.getElementById("equipmentId").value = "";
-    document.getElementById("equipmentOutWrapper").style.display = "none"; // hide OUT Quantity in add mode
+    
+    // Hide IN and OUT Quantity in add mode
+    document.getElementById("equipmentInWrapper").style.display = "none";
+    document.getElementById("equipmentOutWrapper").style.display = "none";
+
+    // Make quantity field editable for new equipment
+    document.getElementById("equipmentQuantity").readOnly = false;
+    if (document.getElementById("equipmentQuantityHint")) {
+      document.getElementById("equipmentQuantityHint").style.display = "none";
+    }
 
     document.getElementById("equipmentModalTitle").innerHTML = 
       '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Tool/Equipment </span>';
@@ -685,52 +709,75 @@
 
   // Handle form submit (Add or Edit)
   document.getElementById("equipmentForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const id = document.getElementById("equipmentId").value;
-  const equipment = {
-    name: document.getElementById("equipmentName").value,
-    quantity: document.getElementById("equipmentQuantity").value
-  };
+    const id = document.getElementById("equipmentId").value;
+    const equipment = {
+      name: document.getElementById("equipmentName").value,
+      quantity: document.getElementById("equipmentQuantity").value
+    };
 
-  // Include OUT quantity if editing
-  const outQty = document.getElementById("equipmentOutQuantity")?.value;
-  if (id && outQty) equipment.outQuantity = outQty;
+    // Include IN and OUT quantity if editing
+    if (id) {
+      const inQty = document.getElementById("equipmentInQuantity")?.value;
+      const outQty = document.getElementById("equipmentOutQuantity")?.value;
+      if (inQty) equipment.inQuantity = inQty;
+      if (outQty) equipment.outQuantity = outQty;
+    }
 
-  let url = "/inventory/equipment";
-  let method = "POST";
+    let url = "/inventory/equipment";
+    let method = "POST";
 
-  if (id) {
-    url = `/api/equipment/${id}`;
-    method = "PUT";
-  }
+    if (id) {
+      url = `/api/equipment/${id}`;
+      method = "PUT";
+    }
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(equipment)
-    });
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(equipment)
+      });
 
-    const result = await response.json();
-    if (response.ok) {
+      const result = await response.json();
+      if (response.ok) {
+        $.notify(
+          { icon: "fa fa-check-circle", title: "Success", message: id ? "Equipment updated successfully!" : "Equipment added successfully!" },
+          { type: "success", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+        );
+        
+        // Reset form
+        document.getElementById("equipmentForm").reset();
+        document.getElementById("equipmentId").value = "";
+        document.getElementById("equipmentQuantity").readOnly = false;
+        if (document.getElementById("equipmentQuantityHint")) {
+          document.getElementById("equipmentQuantityHint").style.display = "none";
+        }
+        document.getElementById("equipmentInWrapper").style.display = "none";
+        document.getElementById("equipmentOutWrapper").style.display = "none";
+
+        // Reset modal title
+        document.getElementById("equipmentModalTitle").innerHTML = 
+          '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Tool/Equipment </span>';
+        document.getElementById("equipmentSubmitBtn").textContent = "Add";
+        
+        $('#addEquipmentModal').modal('hide');
+        loadEquipment();
+      } else {
+        $.notify(
+          { icon: "fa fa-exclamation-triangle", title: "Error", message: result.message || "Something went wrong." },
+          { type: "danger", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+        );
+      }
+    } catch (err) {
+      console.error("Fetch failed:", err);
       $.notify(
-        { icon: "fa fa-check-circle", title: "Success", message: id ? "Equipment updated successfully!" : "Equipment added successfully!" },
-        { type: "success", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
-      );
-      $('#addEquipmentModal').modal('hide');
-      loadEquipment();
-    } else {
-      $.notify(
-        { icon: "fa fa-exclamation-triangle", title: "Error", message: result.message || "Something went wrong." },
+        { icon: "fa fa-exclamation-circle", title: "Error", message: "Network error. Please try again." },
         { type: "danger", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
       );
     }
-  } catch (err) {
-    console.error("Fetch failed:", err);
-  }
-});
-
+  });
 
   // Show QR Code in Modal
   function showQrModal(name, qrCode) {
