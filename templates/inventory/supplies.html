@@ -440,8 +440,16 @@
               </div>
             </div>
 
+            <!-- IN QUANTITY (Only for edit) -->
+            <div class="col-md-6" id="inQuantityWrapper" style="display:none;">
+              <div class="form-group form-group-default">
+                <label>IN Quantity</label>
+                <input id="inQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to add" />
+              </div>
+            </div>
+
             <!-- OUT QUANTITY (Only for edit) -->
-            <div class="col-md-12" id="outQuantityWrapper" style="display:none;">
+            <div class="col-md-6" id="outQuantityWrapper" style="display:none;">
               <div class="form-group form-group-default">
                 <label>OUT Quantity</label>
                 <input id="outQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to remove" />
@@ -516,7 +524,9 @@
     document.getElementById("unitPrice").value = unitPrice;
     document.getElementById("expirationDate").value = expirationDate;
 
+    document.getElementById("inQuantityWrapper").style.display = "block";
     document.getElementById("outQuantityWrapper").style.display = "block";
+    document.getElementById("inQuantity").value = "";
     document.getElementById("outQuantity").value = "";
 
     document.getElementById("supplyModalTitle").innerHTML = '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Product/Item </span>';
@@ -565,9 +575,11 @@
       expirationDate: document.getElementById("expirationDate").value
     };
 
-    // If editing and OUT quantity is provided
+    // If editing and IN/OUT quantity is provided
     if (id) {
+      const inQty = document.getElementById("inQuantity")?.value;
       const outQty = document.getElementById("outQuantity")?.value;
+      if (inQty) supply.inQuantity = inQty;
       if (outQty) supply.outQuantity = outQty;
     }
 
@@ -607,6 +619,7 @@
         // Reset form
         document.getElementById("supplyForm").reset();
         document.getElementById("supplyId").value = "";
+        document.getElementById("inQuantityWrapper").style.display = "none";
         document.getElementById("outQuantityWrapper").style.display = "none";
 
         // Reset modal title
