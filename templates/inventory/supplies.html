@@ -423,6 +423,7 @@
               <div class="form-group form-group-default">
                 <label>Quantity</label>
                 <input id="productQuantity" type="number" min="0" class="form-control" required />
+                <small class="form-text text-muted" id="quantityHint" style="display:none;">Current stock (use IN/OUT fields below to adjust)</small>
               </div>
             </div>
 
@@ -524,6 +525,10 @@
     document.getElementById("unitPrice").value = unitPrice;
     document.getElementById("expirationDate").value = expirationDate;
 
+    // Make quantity field read-only during edit and show hint
+    document.getElementById("productQuantity").readOnly = true;
+    document.getElementById("quantityHint").style.display = "block";
+
     document.getElementById("inQuantityWrapper").style.display = "block";
     document.getElementById("outQuantityWrapper").style.display = "block";
     document.getElementById("inQuantity").value = "";
@@ -619,6 +624,8 @@
         // Reset form
         document.getElementById("supplyForm").reset();
         document.getElementById("supplyId").value = "";
+        document.getElementById("productQuantity").readOnly = false;
+        document.getElementById("quantityHint").style.display = "none";
         document.getElementById("inQuantityWrapper").style.display = "none";
         document.getElementById("outQuantityWrapper").style.display = "none";
 
