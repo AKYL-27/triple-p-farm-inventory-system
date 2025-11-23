@@ -480,203 +480,7 @@
   </div>
 </div>
 
-<script>
-  // Function to load and display supplies from the DB
-  async function loadSupplies() {
-    try {
-      const response = await fetch("/api/supplies");
-      const supplies = await response.json();
-      const tableBody = document.getElementById("suppliesTableBody");
-      tableBody.innerHTML = "";
-
-      supplies.forEach(supply => {
-        const row = `
-          <tr>
-            <td>${supply.name}</td>
-            <td>${supply.quantity}</td>
-            <td>₱${supply.unitPrice ? parseFloat(supply.unitPrice).toFixed(2) : '0.00'}</td>
-            <td>${supply.expirationDate}</td>
-            <td>
-              <div class="form-button-action">
-                <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-                  onclick="editSupply('${supply._id}', '${supply.name}', '${supply.quantity}', '${supply.unitPrice || 0}', '${supply.expirationDate}')">
-                  <i class="fa fa-edit"></i>
-                </button>
-                <button type="button" class="btn btn-link btn-danger" title="Remove"
-                  onclick="deleteSupply('${supply._id}')">
-                  <i class="fa fa-times"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-        tableBody.innerHTML += row;
-      });
-    } catch (err) {
-      console.error("Error loading supplies:", err);
-    }
-  }
-
-  // Function to populate form for editing
-  function editSupply(id, name, quantity, unitPrice, expirationDate) {
-    document.getElementById("supplyId").value = id;
-    document.getElementById("productName").value = name;
-    document.getElementById("productQuantity").value = quantity;
-    document.getElementById("unitPrice").value = unitPrice;
-    document.getElementById("expirationDate").value = expirationDate;
-
-    // Make quantity field read-only during edit and show hint
-    document.getElementById("productQuantity").readOnly = true;
-    document.getElementById("quantityHint").style.display = "block";
-
-    document.getElementById("inQuantityWrapper").style.display = "block";
-    document.getElementById("outQuantityWrapper").style.display = "block";
-    document.getElementById("inQuantity").value = "";
-    document.getElementById("outQuantity").value = "";
-
-    document.getElementById("supplyModalTitle").innerHTML = '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Product/Item </span>';
-    document.getElementById("submitBtn").textContent = "Update";
-
-    $('#addSupplyModal').modal('show');
-  }
-
-  // Function to delete supply
-  async function deleteSupply(id) {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-    
-    try {
-      const response = await fetch(`/api/supplies/${id}`, { method: "DELETE" });
-      const result = await response.json();
-      
-      if (response.ok) {
-        $.notify(
-          { icon: "fa fa-check-circle", title: "Deleted", message: "Product removed successfully!" },
-          { type: "success", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
-        );
-        loadSupplies();
-      } else {
-        $.notify(
-          { icon: "fa fa-exclamation-triangle", title: "Error", message: result.message || "Failed to delete." },
-          { type: "danger", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
-        );
-      }
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  }
-
-  // Load supplies when page loads
-  document.addEventListener("DOMContentLoaded", loadSupplies);
-
-  // Handle form submit
-  document.getElementById("supplyForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const id = document.getElementById("supplyId").value;
-    const supply = {
-      name: document.getElementById("productName").value,
-      quantity: document.getElementById("productQuantity").value,
-      unitPrice: document.getElementById("unitPrice").value,
-      expirationDate: document.getElementById("expirationDate").value
-    };
-
-    // If editing and IN/OUT quantity is provided
-    if (id) {
-      const inQty = document.getElementById("inQuantity")?.value;
-      const outQty = document.getElementById("outQuantity")?.value;
-      if (inQty) supply.inQuantity = inQty;
-      if (outQty) supply.outQuantity = outQty;
-    }
-
-    let url = "/inventory/supplies";
-    let method = "POST";
-    if (id) {
-      url = `/api/supplies/${id}`;
-      method = "PUT";
-    }
-
-    try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(supply)
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        // ✅ Show Bootstrap Notify success message
-        $.notify(
-          {
-            icon: "fa fa-check-circle",
-            title: "Success",
-            message: id ? "Product updated successfully!" : "Product added successfully!"
-          },
-          {
-            type: "success",
-            placement: { from: "top", align: "right" },
-            delay: 3000,
-            timer: 1000,
-            z_index: 9999
-          }
-        );
-
-        // Reset form
-        document.getElementById("supplyForm").reset();
-        document.getElementById("supplyId").value = "";
-        document.getElementById("productQuantity").readOnly = false;
-        document.getElementById("quantityHint").style.display = "none";
-        document.getElementById("inQuantityWrapper").style.display = "none";
-        document.getElementById("outQuantityWrapper").style.display = "none";
-
-        // Reset modal title
-        document.getElementById("supplyModalTitle").innerHTML = '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Product/Item </span>';
-        document.getElementById("submitBtn").textContent = "Add";
-
-        // Close modal
-        $('#addSupplyModal').modal('hide');
-
-        // 🔄 Refresh table
-        loadSupplies();
-
-      } else {
-        $.notify(
-          {
-            icon: "fa fa-exclamation-triangle",
-            title: "Error",
-            message: result.message || "Something went wrong."
-          },
-          {
-            type: "danger",
-            placement: { from: "top", align: "right" },
-            delay: 3000,
-            timer: 1000,
-            z_index: 9999
-          }
-        );
-      }
-
-    } catch (err) {
-      console.error("Fetch failed:", err);
-      $.notify(
-        {
-          icon: "fa fa-exclamation-circle",
-          title: "Error",
-          message: "Network error. Please try again."
-        },
-        {
-          type: "danger",
-          placement: { from: "top", align: "right" },
-          delay: 3000,
-          timer: 1000,
-          z_index: 9999
-        }
-      );
-    }
-  });
-</script>
-                    
-                    <div class="table-responsive">
+<div class="table-responsive">
   <!-- Filters go here 
   <div id="supplies-filters" style="margin-bottom: 10px; display: flex; gap: 10px;"></div>-->
 
@@ -697,6 +501,7 @@
     <tbody id="suppliesTableBody"></tbody>
   </table>
 </div>
+
 <!-- QR Code Modal -->
 <div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -713,14 +518,14 @@
     const qrImg = document.getElementById("qrModalImage");
     const link = document.createElement("a");
     link.href = qrImg.src;
-    link.download = "qr-code.png"; // filename for download
+    link.download = "qr-code.png";
     link.click();
   });
 </script>
 
 <script>
-let editingSupplyId = null; // Tracks if we're editing
-let suppliesTable; // DataTable instance
+let editingSupplyId = null;
+let suppliesTable;
 
 // Load and display supplies
 async function loadSupplies() {
@@ -758,7 +563,7 @@ async function loadSupplies() {
             <td>
               <div class="form-button-action">
                 <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-                  onclick="startEditSupply('${supply._id}', '${supply.name}', '${supply.quantity}', '${supply.unitPrice || 0}', '${supply.expirationDate}')">
+                  onclick="editSupply('${supply._id}', '${supply.name}', '${supply.quantity}', '${supply.unitPrice || 0}', '${supply.expirationDate}')">
                   <i class="fa fa-edit"></i>
                 </button>
                 <button type="button" class="btn btn-link btn-danger" title="Remove"
@@ -776,8 +581,7 @@ async function loadSupplies() {
     // Destroy existing DataTable before re-init
     if ($.fn.DataTable.isDataTable('#add-row')) {
       suppliesTable.destroy();
-      $('#add-row').empty(); // clear old headers/DOM
-      // Rebuild table header
+      $('#add-row').empty();
       $('#add-row').append(`
         <thead>
           <tr>
@@ -800,11 +604,11 @@ async function loadSupplies() {
       pageLength: 5
     });
 
-    // Create filters above the table (skip QR Code and Action col)
+    // Create filters above the table
     const filtersDiv = $('#supplies-filters');
-    filtersDiv.empty(); // clear old filters
+    filtersDiv.empty();
     $('#add-row thead th').each(function(index) {
-      if (index === 4 || index === 5) return; // Skip QR Code and Action columns
+      if (index === 4 || index === 5) return;
       const column = suppliesTable.column(index);
       const select = $('<select class="form-select"><option value="">All</option></select>')
         .appendTo(filtersDiv)
@@ -823,7 +627,8 @@ async function loadSupplies() {
   }
 }
 
-function startEditSupply(id, name, quantity, unitPrice, expirationDate) {
+// Function to populate form for editing
+function editSupply(id, name, quantity, unitPrice, expirationDate) {
   document.getElementById("supplyId").value = id;
   document.getElementById("productName").value = name;
   document.getElementById("productQuantity").value = quantity;
@@ -848,6 +653,7 @@ function startEditSupply(id, name, quantity, unitPrice, expirationDate) {
   $('#addSupplyModal').modal('show');
 }
 
+// Function to open Add modal
 function openAddModal() {
   document.getElementById("supplyForm").reset();
   document.getElementById("supplyId").value = "";
@@ -868,6 +674,7 @@ function openAddModal() {
   $('#addSupplyModal').modal('show');
 }
 
+// Function to delete supply
 async function deleteSupply(id) {
   if (!confirm("Are you sure you want to delete this product?")) return;
   try {
@@ -890,6 +697,7 @@ async function deleteSupply(id) {
   }
 }
 
+// Handle form submit
 document.getElementById("supplyForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -929,6 +737,21 @@ document.getElementById("supplyForm").addEventListener("submit", async function 
         { icon: "fa fa-check-circle", title: "Success", message: id ? "Product updated successfully!" : "Product added successfully!" },
         { type: "success", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
       );
+      
+      // Reset form
+      document.getElementById("supplyForm").reset();
+      document.getElementById("supplyId").value = "";
+      document.getElementById("productQuantity").readOnly = false;
+      if (document.getElementById("quantityHint")) {
+        document.getElementById("quantityHint").style.display = "none";
+      }
+      document.getElementById("inQuantityWrapper").style.display = "none";
+      document.getElementById("outQuantityWrapper").style.display = "none";
+
+      // Reset modal title
+      document.getElementById("supplyModalTitle").innerHTML = '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Product/Item </span>';
+      document.getElementById("submitBtn").textContent = "Add";
+      
       $('#addSupplyModal').modal('hide');
       loadSupplies();
     } else {
@@ -939,12 +762,16 @@ document.getElementById("supplyForm").addEventListener("submit", async function 
     }
   } catch (err) {
     console.error("Fetch failed:", err);
+    $.notify(
+      { icon: "fa fa-exclamation-circle", title: "Error", message: "Network error. Please try again." },
+      { type: "danger", placement: { from: "top", align: "right" }, delay: 3000, z_index: 9999 }
+    );
   }
 });
 
+// Load supplies when page loads
 document.addEventListener("DOMContentLoaded", loadSupplies);
 </script>
-
 <script>
 function showQrModal(name, qrUrl) {
   if (!qrUrl) {
