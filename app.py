@@ -748,6 +748,8 @@ def get_farmer_borrow_history(farmer_name):
 def borrow_equipment(equipment_id):
     try:
         data = request.get_json()
+        print("Borrow request data:", data)
+
         borrower_name = data.get("borrowerName")
         borrow_qty = data.get("quantity")
 
