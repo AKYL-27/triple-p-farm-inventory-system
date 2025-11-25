@@ -748,45 +748,47 @@ def get_farmer_borrow_history(farmer_name):
 def borrow_equipment(equipment_id):
     try:
         data = request.get_json()
-        print("Borrow request JSON:", data)  # ✅ log incoming JSON
-
-        if not data:
-            return jsonify({"message": "Request body is empty"}), 400
-
         borrower_name = data.get("borrowerName")
         borrow_qty = data.get("quantity")
 
+        # Validate input
         if not borrower_name:
-            return jsonify({"message": "borrowerName is required"}), 400
+            return jsonify({"message": "Missing borrowerName"}), 400
         if borrow_qty is None:
-            return jsonify({"message": "quantity is required"}), 400
+            return jsonify({"message": "Missing quantity"}), 400
 
         try:
             borrow_qty = int(borrow_qty)
         except ValueError:
-            return jsonify({"message": "quantity must be an integer"}), 400
+            return jsonify({"message": "Quantity must be a number"}), 400
 
         # Fetch equipment
         current_equipment = equipment_collection.find_one({"_id": ObjectId(equipment_id)})
         if not current_equipment:
-            return jsonify({"message": "Equipment not found"}), 404
+            return jsonify({"message": f"Equipment with id {equipment_id} not found"}), 404
 
-        if current_equipment["quantity"] < borrow_qty:
-            return jsonify({"message": "Not enough stock"}), 400
+        # Check stock
+        available_qty = current_equipment.get("quantity", 0)
+        if available_qty < borrow_qty:
+            return jsonify({
+                "message": "Not enough stock",
+                "requested": borrow_qty,
+                "available": available_qty
+            }), 400
 
-        # Update equipment quantity and usage
+        # Update quantity and usage stats
         equipment_collection.update_one(
             {"_id": ObjectId(equipment_id)},
             {
                 "$set": {
-                    "quantity": current_equipment["quantity"] - borrow_qty,
+                    "quantity": available_qty - borrow_qty,
                     "lastUsed": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 },
                 "$inc": {"totalBorrowCount": borrow_qty}
             }
         )
 
-        # Record in borrow history
+        # Record borrow history
         history = {
             "equipmentId": str(current_equipment["_id"]),
             "equipmentName": current_equipment["name"],
@@ -796,21 +798,19 @@ def borrow_equipment(equipment_id):
             "dateReturned": None,
             "status": "PENDING"
         }
-
         inserted = borrow_history_collection.insert_one(history)
         history["_id"] = str(inserted.inserted_id)
 
         return jsonify({
-            "message": "Equipment borrowed",
-            "remaining": current_equipment["quantity"] - borrow_qty,
+            "message": "Equipment borrowed successfully",
+            "remaining": available_qty - borrow_qty,
             "borrowedItem": history
         }), 200
 
     except Exception as e:
-        # Catch any unexpected errors and log them
-        print("Borrow API Exception:", e)
-        return jsonify({"message": "Internal server error: " + str(e)}), 500
-
+        # Log the exception for debugging
+        print("Error in borrow_equipment:", str(e))
+        return jsonify({"message": f"Internal server error: {str(e)}"}), 500
     
 @app.route('/api/borrow-requests', methods=['GET'])
 def get_borrow_requests():
