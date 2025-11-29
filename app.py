@@ -358,6 +358,7 @@ def update_supply(supply_id):
         
         # Determine transaction type based on what's provided
         transaction_type = None
+        transaction_amount = 0  # NEW: Track actual transaction amount
         
         # Handle IN quantity (add to current quantity)
         if data.get("inQuantity"):
@@ -365,6 +366,7 @@ def update_supply(supply_id):
             if in_qty > 0:
                 new_quantity = current_supply["quantity"] + in_qty
                 transaction_type = "IN"
+                transaction_amount = in_qty  # NEW: Store the IN amount
         
         # Handle OUT quantity (subtract from current quantity)
         if data.get("outQuantity"):
@@ -372,6 +374,7 @@ def update_supply(supply_id):
             if out_qty > 0:
                 new_quantity = max(0, current_supply["quantity"] - out_qty)
                 transaction_type = "OUT"
+                transaction_amount = out_qty  # NEW: Store the OUT amount
         
         # If both IN and OUT are provided, calculate net change
         if data.get("inQuantity") and data.get("outQuantity"):
@@ -380,10 +383,12 @@ def update_supply(supply_id):
             net_change = in_qty - out_qty
             new_quantity = max(0, current_supply["quantity"] + net_change)
             transaction_type = "IN" if net_change > 0 else "OUT" if net_change < 0 else "ADJUSTED"
+            transaction_amount = abs(net_change)  # NEW: Store absolute net change
         
         # If no IN/OUT quantity provided, use the quantity from the form directly
         if not data.get("inQuantity") and not data.get("outQuantity"):
             transaction_type = "UPDATED"
+            transaction_amount = 0  # NEW: No transaction amount for updates
         
         update_data = {
             "name": data.get("name"),
@@ -391,6 +396,7 @@ def update_supply(supply_id):
             "unitPrice": float(data.get("unitPrice", 0)),
             "expirationDate": data.get("expirationDate"),
             "transactionType": transaction_type,
+            "transactionAmount": transaction_amount,  # NEW FIELD
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
