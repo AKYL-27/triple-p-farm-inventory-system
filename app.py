@@ -717,6 +717,7 @@ def update_equipment(equipment_id):
             "name": data.get("name", current_equipment["name"]),
             "quantity": new_quantity,
             "transactionType": transaction_type,
+            "transactionAmount": transaction_amount,  # ADD THIS LINE
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
