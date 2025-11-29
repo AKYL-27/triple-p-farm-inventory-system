@@ -737,9 +737,9 @@
 <script>
 let chartInstance;
 let chartDataSets = {
-  daily: { labels: [], data: [] },
-  weekly: { labels: [], data: [] },
-  monthly: { labels: [], data: [] }
+  daily: { labels: [], dataIn: [], dataOut: [] },
+  weekly: { labels: [], dataIn: [], dataOut: [] },
+  monthly: { labels: [], dataIn: [], dataOut: [] }
 };
 
 async function loadSuppliesChart() {
@@ -756,12 +756,18 @@ async function loadSuppliesChart() {
       const day = new Date();
       day.setDate(day.getDate() - i);
       const label = day.toLocaleDateString();
-      const total = supplies
-        .filter(s => isSameDay(s.dateAdded, day))
+      
+      const totalIn = supplies
+        .filter(s => isSameDay(s.dateAdded, day) && s.type === 'in')
+        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      
+      const totalOut = supplies
+        .filter(s => isSameDay(s.dateAdded, day) && s.type === 'out')
         .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
 
       chartDataSets.daily.labels.push(label);
-      chartDataSets.daily.data.push(total);
+      chartDataSets.daily.dataIn.push(totalIn);
+      chartDataSets.daily.dataOut.push(totalOut);
     }
 
     // WEEKLY (last 4 weeks)
@@ -772,12 +778,18 @@ async function loadSuppliesChart() {
       weekEnd.setDate(weekStart.getDate() + 6);
 
       const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
-      const total = supplies
-        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
+      
+      const totalIn = supplies
+        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd && s.type === 'in')
+        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      
+      const totalOut = supplies
+        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd && s.type === 'out')
         .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
 
       chartDataSets.weekly.labels.push(label);
-      chartDataSets.weekly.data.push(total);
+      chartDataSets.weekly.dataIn.push(totalIn);
+      chartDataSets.weekly.dataOut.push(totalOut);
     }
 
     // MONTHLY (last 12 months)
@@ -788,28 +800,46 @@ async function loadSuppliesChart() {
       month.setMonth(month.getMonth() - i);
 
       const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-      const total = supplies
+      
+      const totalIn = supplies
         .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
-                     s.dateAdded.getFullYear() === month.getFullYear())
+                     s.dateAdded.getFullYear() === month.getFullYear() &&
+                     s.type === 'in')
+        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      
+      const totalOut = supplies
+        .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
+                     s.dateAdded.getFullYear() === month.getFullYear() &&
+                     s.type === 'out')
         .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
 
       chartDataSets.monthly.labels.push(label);
-      chartDataSets.monthly.data.push(total);
+      chartDataSets.monthly.dataIn.push(totalIn);
+      chartDataSets.monthly.dataOut.push(totalOut);
     }
 
-    // Initial chart (Daily as bar)
+    // Initial chart (Daily as bar) with both IN and OUT
     const ctx = document.getElementById("lineChart").getContext("2d");
     chartInstance = new Chart(ctx, {
       type: "bar",
       data: {
         labels: chartDataSets.daily.labels,
-        datasets: [{
-          label: "Supplies Added (Daily)",
-          backgroundColor: "#1d7af3",
-          borderColor: "#1d7af3",
-          borderWidth: 1,
-          data: chartDataSets.daily.data
-        }]
+        datasets: [
+          {
+            label: "Supplies IN",
+            backgroundColor: "#1d7af3",
+            borderColor: "#1d7af3",
+            borderWidth: 1,
+            data: chartDataSets.daily.dataIn
+          },
+          {
+            label: "Supplies OUT",
+            backgroundColor: "#f3545d",
+            borderColor: "#f3545d",
+            borderWidth: 1,
+            data: chartDataSets.daily.dataOut
+          }
+        ]
       },
       options: {
         responsive: true,
@@ -817,10 +847,10 @@ async function loadSuppliesChart() {
         plugins: {
           legend: {
             position: "bottom",
-            labels: { padding: 10, color: "#1d7af3" }
+            labels: { padding: 10 }
           },
           tooltip: {
-            mode: "nearest",
+            mode: "index",
             intersect: false,
             padding: 10
           }
@@ -840,11 +870,10 @@ async function loadSuppliesChart() {
 function updateChartView(type) {
   if (!chartInstance) return;
   chartInstance.data.labels = chartDataSets[type].labels;
-  chartInstance.data.datasets[0].data = chartDataSets[type].data;
-  chartInstance.data.datasets[0].label =
-    type === "daily" ? "Supplies Added (Daily)" :
-    type === "weekly" ? "Supplies Added (Weekly)" :
-    "Supplies Added (Monthly)";
+  chartInstance.data.datasets[0].data = chartDataSets[type].dataIn;
+  chartInstance.data.datasets[1].data = chartDataSets[type].dataOut;
+  chartInstance.data.datasets[0].label = "Supplies IN";
+  chartInstance.data.datasets[1].label = "Supplies OUT";
   chartInstance.update();
 }
 
