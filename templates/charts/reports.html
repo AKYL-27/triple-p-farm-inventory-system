@@ -747,6 +747,9 @@ async function loadSuppliesChart() {
     const response = await fetch("/api/supplies");
     const supplies = await response.json();
 
+    console.log("Total supplies records:", supplies.length);
+    console.log("Sample records:", supplies.slice(0, 3));
+
     // Group by product to track changes over time
     const productHistory = {};
     
@@ -763,6 +766,9 @@ async function loadSuppliesChart() {
     // Sort each product's history by date
     Object.keys(productHistory).forEach(key => {
       productHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
+      if (productHistory[key].length > 1) {
+        console.log(`Product "${key}" has ${productHistory[key].length} records`);
+      }
     });
 
     // DAILY (last 7 days)
@@ -774,33 +780,55 @@ async function loadSuppliesChart() {
       let totalIn = 0;
       let totalOut = 0;
 
-      // For each product, check what happened on this day
-      Object.keys(productHistory).forEach(productName => {
-        const history = productHistory[productName];
-        
-        for (let j = 0; j < history.length; j++) {
-          const current = history[j];
-          if (!isSameDay(current.dateAdded, day)) continue;
+      // Check if we have multiple records per product (history tracking)
+      const hasHistory = Object.values(productHistory).some(h => h.length > 1);
 
-          if (j === 0) {
-            // First record for this product - it's initial stock (IN)
-            totalIn += parseInt(current.quantity) || 0;
-          } else {
-            const previous = history[j - 1];
-            const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-            
-            if (diff > 0) {
-              totalIn += diff;  // Quantity increased
-            } else if (diff < 0) {
-              totalOut += Math.abs(diff);  // Quantity decreased
+      if (hasHistory) {
+        // Use history-based calculation
+        Object.keys(productHistory).forEach(productName => {
+          const history = productHistory[productName];
+          
+          for (let j = 0; j < history.length; j++) {
+            const current = history[j];
+            if (!isSameDay(current.dateAdded, day)) continue;
+
+            if (j === 0) {
+              totalIn += parseInt(current.quantity) || 0;
+            } else {
+              const previous = history[j - 1];
+              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+              
+              if (diff > 0) {
+                totalIn += diff;
+              } else if (diff < 0) {
+                totalOut += Math.abs(diff);
+              }
             }
           }
-        }
-      });
+        });
+      } else {
+        // Fallback: Use transactionType field with transactionAmount
+        supplies
+          .filter(s => isSameDay(s.dateAdded, day))
+          .forEach(s => {
+            // Use transactionAmount if available, otherwise use quantity
+            const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+            
+            if (s.transactionType === 'IN') {
+              totalIn += amount;
+            } else if (s.transactionType === 'OUT') {
+              totalOut += amount;
+            }
+          });
+      }
 
       chartDataSets.daily.labels.push(label);
       chartDataSets.daily.dataIn.push(totalIn);
       chartDataSets.daily.dataOut.push(totalOut);
+      
+      if (totalIn > 0 || totalOut > 0) {
+        console.log(`${label}: IN=${totalIn}, OUT=${totalOut}`);
+      }
     }
 
     // WEEKLY (last 4 weeks)
@@ -815,27 +843,43 @@ async function loadSuppliesChart() {
       let totalIn = 0;
       let totalOut = 0;
 
-      Object.keys(productHistory).forEach(productName => {
-        const history = productHistory[productName];
-        
-        for (let j = 0; j < history.length; j++) {
-          const current = history[j];
-          if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
+      const hasHistory = Object.values(productHistory).some(h => h.length > 1);
 
-          if (j === 0) {
-            totalIn += parseInt(current.quantity) || 0;
-          } else {
-            const previous = history[j - 1];
-            const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-            
-            if (diff > 0) {
-              totalIn += diff;
-            } else if (diff < 0) {
-              totalOut += Math.abs(diff);
+      if (hasHistory) {
+        Object.keys(productHistory).forEach(productName => {
+          const history = productHistory[productName];
+          
+          for (let j = 0; j < history.length; j++) {
+            const current = history[j];
+            if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
+
+            if (j === 0) {
+              totalIn += parseInt(current.quantity) || 0;
+            } else {
+              const previous = history[j - 1];
+              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+              
+              if (diff > 0) {
+                totalIn += diff;
+              } else if (diff < 0) {
+                totalOut += Math.abs(diff);
+              }
             }
           }
-        }
-      });
+        });
+      } else {
+        supplies
+          .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
+          .forEach(s => {
+            const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+            
+            if (s.transactionType === 'IN') {
+              totalIn += amount;
+            } else if (s.transactionType === 'OUT') {
+              totalOut += amount;
+            }
+          });
+      }
 
       chartDataSets.weekly.labels.push(label);
       chartDataSets.weekly.dataIn.push(totalIn);
@@ -854,28 +898,45 @@ async function loadSuppliesChart() {
       let totalIn = 0;
       let totalOut = 0;
 
-      Object.keys(productHistory).forEach(productName => {
-        const history = productHistory[productName];
-        
-        for (let j = 0; j < history.length; j++) {
-          const current = history[j];
-          if (current.dateAdded.getMonth() !== month.getMonth() ||
-              current.dateAdded.getFullYear() !== month.getFullYear()) continue;
+      const hasHistory = Object.values(productHistory).some(h => h.length > 1);
 
-          if (j === 0) {
-            totalIn += parseInt(current.quantity) || 0;
-          } else {
-            const previous = history[j - 1];
-            const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-            
-            if (diff > 0) {
-              totalIn += diff;
-            } else if (diff < 0) {
-              totalOut += Math.abs(diff);
+      if (hasHistory) {
+        Object.keys(productHistory).forEach(productName => {
+          const history = productHistory[productName];
+          
+          for (let j = 0; j < history.length; j++) {
+            const current = history[j];
+            if (current.dateAdded.getMonth() !== month.getMonth() ||
+                current.dateAdded.getFullYear() !== month.getFullYear()) continue;
+
+            if (j === 0) {
+              totalIn += parseInt(current.quantity) || 0;
+            } else {
+              const previous = history[j - 1];
+              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+              
+              if (diff > 0) {
+                totalIn += diff;
+              } else if (diff < 0) {
+                totalOut += Math.abs(diff);
+              }
             }
           }
-        }
-      });
+        });
+      } else {
+        supplies
+          .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
+                       s.dateAdded.getFullYear() === month.getFullYear())
+          .forEach(s => {
+            const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+            
+            if (s.transactionType === 'IN') {
+              totalIn += amount;
+            } else if (s.transactionType === 'OUT') {
+              totalOut += amount;
+            }
+          });
+      }
 
       chartDataSets.monthly.labels.push(label);
       chartDataSets.monthly.dataIn.push(totalIn);
