@@ -397,6 +397,45 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Equipment Report Section -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-title">Equipment Report</div>
+        <div class="card-tools">
+          <div class="dropdown">
+            <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+              <span class="btn-label">
+                <i class="fa fa-print"></i>
+              </span>
+              Print
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('daily')">Daily</a></li>
+              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('weekly')">Weekly</a></li>
+              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('monthly')">Monthly</a></li>
+              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('overall')">Overall</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <button class="btn btn-primary" onclick="updateEquipmentChartView('daily')">Daily</button>
+          <button class="btn btn-secondary" onclick="updateEquipmentChartView('weekly')">Weekly</button>
+          <button class="btn btn-info" onclick="updateEquipmentChartView('monthly')">Monthly</button>
+        </div>
+        <div class="chart-container" style="position: relative; height: 350px;">
+          <canvas id="equipmentChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
               <!--
               <div class="col-md-6">
                 <div class="card">
@@ -1243,6 +1282,544 @@ async function generateSupplyReportPDF(type) {
   if (type === "monthly") addTables("Monthly Breakdown", grouped.monthly);
 
   pdf.save(`supply-report-${type}.pdf`);
+}
+</script>
+
+
+  <!--equpment-->
+    <script>
+let equipmentChartInstance;
+let equipmentChartDataSets = {
+  daily: { labels: [], dataUsed: [], dataUnused: [] },
+  weekly: { labels: [], dataUsed: [], dataUnused: [] },
+  monthly: { labels: [], dataUsed: [], dataUnused: [] }
+};
+
+async function loadEquipmentChart() {
+  try {
+    const response = await fetch("/api/equipment"); // Change to your equipment endpoint
+    const equipment = await response.json();
+
+    console.log("Total equipment records:", equipment.length);
+    console.log("Sample equipment records:", equipment.slice(0, 3));
+
+    // Group by equipment to track changes over time
+    const equipmentHistory = {};
+    
+    equipment.forEach(e => {
+      e.dateAdded = e.dateAdded ? new Date(e.dateAdded) : new Date();
+      const key = e.name;
+      
+      if (!equipmentHistory[key]) {
+        equipmentHistory[key] = [];
+      }
+      equipmentHistory[key].push(e);
+    });
+
+    // Sort each equipment's history by date
+    Object.keys(equipmentHistory).forEach(key => {
+      equipmentHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
+      if (equipmentHistory[key].length > 1) {
+        console.log(`Equipment "${key}" has ${equipmentHistory[key].length} records`);
+      }
+    });
+
+    // DAILY (last 7 days)
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+      const label = day.toLocaleDateString();
+      
+      let totalUsed = 0;
+      let totalUnused = 0;
+
+      const hasHistory = Object.values(equipmentHistory).some(h => h.length > 1);
+
+      if (hasHistory) {
+        Object.keys(equipmentHistory).forEach(equipmentName => {
+          const history = equipmentHistory[equipmentName];
+          
+          for (let j = 0; j < history.length; j++) {
+            const current = history[j];
+            if (!isSameDay(current.dateAdded, day)) continue;
+
+            if (j === 0) {
+              totalUnused += parseInt(current.quantity) || 0;
+            } else {
+              const previous = history[j - 1];
+              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+              
+              if (diff > 0) {
+                totalUnused += diff;
+              } else if (diff < 0) {
+                totalUsed += Math.abs(diff);
+              }
+            }
+          }
+        });
+      } else {
+        // Use transactionType field directly
+        // IN = Equipment added (unused/available)
+        // OUT = Equipment borrowed/used
+        equipment
+          .filter(e => isSameDay(e.dateAdded, day))
+          .forEach(e => {
+            const amount = e.transactionAmount ? parseInt(e.transactionAmount) : parseInt(e.quantity) || 0;
+            
+            if (e.transactionType === 'OUT') {
+              // OUT means equipment was borrowed/used
+              totalUsed += amount;
+            } else if (e.transactionType === 'IN') {
+              // IN means equipment was added/returned (unused)
+              totalUnused += amount;
+            }
+          });
+      }
+
+      equipmentChartDataSets.daily.labels.push(label);
+      equipmentChartDataSets.daily.dataUsed.push(totalUsed);
+      equipmentChartDataSets.daily.dataUnused.push(totalUnused);
+      
+      if (totalUsed > 0 || totalUnused > 0) {
+        console.log(`Equipment ${label}: USED=${totalUsed}, UNUSED=${totalUnused}`);
+      }
+    }
+
+    // WEEKLY (last 4 weeks)
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = getStartOfWeek(new Date());
+      weekStart.setDate(weekStart.getDate() - i * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+      
+      let totalUsed = 0;
+      let totalUnused = 0;
+
+      const hasHistory = Object.values(equipmentHistory).some(h => h.length > 1);
+
+      if (hasHistory) {
+        Object.keys(equipmentHistory).forEach(equipmentName => {
+          const history = equipmentHistory[equipmentName];
+          
+          for (let j = 0; j < history.length; j++) {
+            const current = history[j];
+            if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
+
+            if (j === 0) {
+              totalUnused += parseInt(current.quantity) || 0;
+            } else {
+              const previous = history[j - 1];
+              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+              
+              if (diff > 0) {
+                totalUnused += diff;
+              } else if (diff < 0) {
+                totalUsed += Math.abs(diff);
+              }
+            }
+          }
+        });
+      } else {
+        equipment
+          .filter(e => e.dateAdded >= weekStart && e.dateAdded <= weekEnd)
+          .forEach(e => {
+            const amount = e.transactionAmount ? parseInt(e.transactionAmount) : parseInt(e.quantity) || 0;
+            
+            if (e.transactionType === 'OUT') {
+              totalUsed += amount;
+            } else if (e.transactionType === 'IN') {
+              totalUnused += amount;
+            }
+          });
+      }
+
+      equipmentChartDataSets.weekly.labels.push(label);
+      equipmentChartDataSets.weekly.dataUsed.push(totalUsed);
+      equipmentChartDataSets.weekly.dataUnused.push(totalUnused);
+    }
+
+    // MONTHLY (last 12 months)
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    for (let i = 11; i >= 0; i--) {
+      const month = new Date();
+      month.setMonth(month.getMonth() - i);
+
+      const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
+      
+      let totalUsed = 0;
+      let totalUnused = 0;
+
+      const hasHistory = Object.values(equipmentHistory).some(h => h.length > 1);
+
+      if (hasHistory) {
+        Object.keys(equipmentHistory).forEach(equipmentName => {
+          const history = equipmentHistory[equipmentName];
+          
+          for (let j = 0; j < history.length; j++) {
+            const current = history[j];
+            if (current.dateAdded.getMonth() !== month.getMonth() ||
+                current.dateAdded.getFullYear() !== month.getFullYear()) continue;
+
+            if (j === 0) {
+              totalUnused += parseInt(current.quantity) || 0;
+            } else {
+              const previous = history[j - 1];
+              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+              
+              if (diff > 0) {
+                totalUnused += diff;
+              } else if (diff < 0) {
+                totalUsed += Math.abs(diff);
+              }
+            }
+          }
+        });
+      } else {
+        equipment
+          .filter(e => e.dateAdded.getMonth() === month.getMonth() &&
+                       e.dateAdded.getFullYear() === month.getFullYear())
+          .forEach(e => {
+            const amount = e.transactionAmount ? parseInt(e.transactionAmount) : parseInt(e.quantity) || 0;
+            
+            if (e.transactionType === 'OUT') {
+              totalUsed += amount;
+            } else if (e.transactionType === 'IN') {
+              totalUnused += amount;
+            }
+          });
+      }
+
+      equipmentChartDataSets.monthly.labels.push(label);
+      equipmentChartDataSets.monthly.dataUsed.push(totalUsed);
+      equipmentChartDataSets.monthly.dataUnused.push(totalUnused);
+    }
+
+    // Initial chart (Daily as bar) with both USED and UNUSED
+    const ctx = document.getElementById("equipmentChart").getContext("2d");
+    equipmentChartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: equipmentChartDataSets.daily.labels,
+        datasets: [
+          {
+            label: "Equipment USED",
+            backgroundColor: "#f3545d",
+            borderColor: "#f3545d",
+            borderWidth: 1,
+            data: equipmentChartDataSets.daily.dataUsed
+          },
+          {
+            label: "Equipment UNUSED",
+            backgroundColor: "#31ce36",
+            borderColor: "#31ce36",
+            borderWidth: 1,
+            data: equipmentChartDataSets.daily.dataUnused
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { padding: 10 }
+          },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            padding: 10
+          }
+        },
+        layout: { padding: { left: 15, right: 15, top: 15, bottom: 15 } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("Error loading equipment chart:", err);
+  }
+}
+
+function updateEquipmentChartView(type) {
+  if (!equipmentChartInstance) return;
+  equipmentChartInstance.data.labels = equipmentChartDataSets[type].labels;
+  equipmentChartInstance.data.datasets[0].data = equipmentChartDataSets[type].dataUsed;
+  equipmentChartInstance.data.datasets[1].data = equipmentChartDataSets[type].dataUnused;
+  equipmentChartInstance.data.datasets[0].label = "Equipment USED";
+  equipmentChartInstance.data.datasets[1].label = "Equipment UNUSED";
+  equipmentChartInstance.update();
+}
+
+// Helpers (reuse if not already defined)
+function isSameDay(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth() === d2.getMonth() &&
+         d1.getDate() === d2.getDate();
+}
+
+function getStartOfWeek(date) {
+  const day = new Date(date);
+  const dayOfWeek = day.getDay();
+  const diff = day.getDate() - dayOfWeek;
+  day.setDate(diff);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+document.addEventListener("DOMContentLoaded", loadEquipmentChart);
+</script>
+
+<script>
+function groupEquipmentByPeriod(equipment) {
+  const daily = {};
+  const weekly = {};
+  const monthly = {};
+
+  const equipmentHistory = {};
+  equipment.forEach(e => {
+    const key = e.name;
+    if (!equipmentHistory[key]) equipmentHistory[key] = [];
+    equipmentHistory[key].push({...e, dateAdded: new Date(e.dateAdded)});
+  });
+
+  Object.keys(equipmentHistory).forEach(key => {
+    equipmentHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
+  });
+
+  // --- DAILY (last 7 days) ---
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date();
+    day.setDate(day.getDate() - i);
+    const label = day.toLocaleDateString();
+
+    daily[label] = { USED: {}, UNUSED: {} };
+    
+    Object.keys(equipmentHistory).forEach(equipmentName => {
+      const history = equipmentHistory[equipmentName];
+      
+      for (let j = 0; j < history.length; j++) {
+        const current = history[j];
+        if (!isSameDay(current.dateAdded, day)) continue;
+
+        if (j === 0) {
+          if (!daily[label].UNUSED[equipmentName]) daily[label].UNUSED[equipmentName] = 0;
+          daily[label].UNUSED[equipmentName] += parseInt(current.quantity) || 0;
+        } else {
+          const previous = history[j - 1];
+          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+          
+          if (diff > 0) {
+            if (!daily[label].UNUSED[equipmentName]) daily[label].UNUSED[equipmentName] = 0;
+            daily[label].UNUSED[equipmentName] += diff;
+          } else if (diff < 0) {
+            if (!daily[label].USED[equipmentName]) daily[label].USED[equipmentName] = 0;
+            daily[label].USED[equipmentName] += Math.abs(diff);
+          }
+        }
+      }
+    });
+  }
+
+  // --- WEEKLY (last 4 weeks) ---
+  for (let i = 3; i >= 0; i--) {
+    const weekStart = getStartOfWeek(new Date());
+    weekStart.setDate(weekStart.getDate() - i * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+
+    const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+    weekly[label] = { USED: {}, UNUSED: {} };
+
+    Object.keys(equipmentHistory).forEach(equipmentName => {
+      const history = equipmentHistory[equipmentName];
+      
+      for (let j = 0; j < history.length; j++) {
+        const current = history[j];
+        if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
+
+        if (j === 0) {
+          if (!weekly[label].UNUSED[equipmentName]) weekly[label].UNUSED[equipmentName] = 0;
+          weekly[label].UNUSED[equipmentName] += parseInt(current.quantity) || 0;
+        } else {
+          const previous = history[j - 1];
+          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+          
+          if (diff > 0) {
+            if (!weekly[label].UNUSED[equipmentName]) weekly[label].UNUSED[equipmentName] = 0;
+            weekly[label].UNUSED[equipmentName] += diff;
+          } else if (diff < 0) {
+            if (!weekly[label].USED[equipmentName]) weekly[label].USED[equipmentName] = 0;
+            weekly[label].USED[equipmentName] += Math.abs(diff);
+          }
+        }
+      }
+    });
+  }
+
+  // --- MONTHLY (last 12 months) ---
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  for (let i = 11; i >= 0; i--) {
+    const month = new Date();
+    month.setMonth(month.getMonth() - i);
+
+    const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
+    monthly[label] = { USED: {}, UNUSED: {} };
+
+    Object.keys(equipmentHistory).forEach(equipmentName => {
+      const history = equipmentHistory[equipmentName];
+      
+      for (let j = 0; j < history.length; j++) {
+        const current = history[j];
+        if (current.dateAdded.getMonth() !== month.getMonth() ||
+            current.dateAdded.getFullYear() !== month.getFullYear()) continue;
+
+        if (j === 0) {
+          if (!monthly[label].UNUSED[equipmentName]) monthly[label].UNUSED[equipmentName] = 0;
+          monthly[label].UNUSED[equipmentName] += parseInt(current.quantity) || 0;
+        } else {
+          const previous = history[j - 1];
+          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+          
+          if (diff > 0) {
+            if (!monthly[label].UNUSED[equipmentName]) monthly[label].UNUSED[equipmentName] = 0;
+            monthly[label].UNUSED[equipmentName] += diff;
+          } else if (diff < 0) {
+            if (!monthly[label].USED[equipmentName]) monthly[label].USED[equipmentName] = 0;
+            monthly[label].USED[equipmentName] += Math.abs(diff);
+          }
+        }
+      }
+    });
+  }
+
+  return { daily, weekly, monthly };
+}
+</script>
+
+<script>
+async function generateEquipmentReportPDF(type) {
+  const { jsPDF } = window.jspdf;
+
+  const response = await fetch("/api/equipment"); // Change to your equipment endpoint
+  const equipment = await response.json();
+  const grouped = groupEquipmentByPeriod(equipment);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;
+  canvas.height = 400;
+  const ctx = canvas.getContext("2d");
+
+  const chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: equipmentChartDataSets[type].labels,
+      datasets: [
+        {
+          label: "Equipment USED",
+          backgroundColor: "#f3545d",
+          borderColor: "#f3545d",
+          borderWidth: 1,
+          data: equipmentChartDataSets[type].dataUsed || []
+        },
+        {
+          label: "Equipment UNUSED",
+          backgroundColor: "#31ce36",
+          borderColor: "#31ce36",
+          borderWidth: 1,
+          data: equipmentChartDataSets[type].dataUnused || []
+        }
+      ]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const chartImage = canvas.toDataURL("image/png");
+  chart.destroy();
+
+  const pdf = new jsPDF("landscape", "mm", "a4");
+  pdf.setFontSize(16);
+  pdf.text("Equipment Report - USED/UNUSED", 14, 15);
+
+  const imgWidth = 280;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+  pdf.addImage(chartImage, "PNG", 10, 25, imgWidth, imgHeight);
+
+  function addTables(title, dataObj) {
+    const labelsWithData = Object.keys(dataObj).filter(
+      (label) => Object.keys(dataObj[label].USED).length > 0 || Object.keys(dataObj[label].UNUSED).length > 0
+    );
+
+    if (labelsWithData.length === 0) return;
+
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.text(title, 14, 15);
+
+    labelsWithData.forEach((label) => {
+      const usedRows = Object.entries(dataObj[label].USED).map(([item, qty]) => [item, qty, 'USED']);
+      const unusedRows = Object.entries(dataObj[label].UNUSED).map(([item, qty]) => [item, qty, 'UNUSED']);
+      const allRows = [...usedRows, ...unusedRows];
+      
+      if (allRows.length > 0) {
+        pdf.autoTable({
+          head: [[label, "Quantity", "Status"]],
+          body: allRows,
+          startY: pdf.lastAutoTable ? pdf.lastAutoTable.finalY + 10 : 25,
+          theme: "grid"
+        });
+      }
+    });
+  }
+
+  if (type === "daily") addTables("Daily Breakdown", grouped.daily);
+  if (type === "weekly") addTables("Weekly Breakdown", grouped.weekly);
+  if (type === "monthly") addTables("Monthly Breakdown", grouped.monthly);
+
+  if (type === "overall") {
+    const totalsUsed = {};
+    const totalsUnused = {};
+    equipment.forEach(e => {
+      if (e.transactionType === 'OUT') {
+        // OUT = borrowed/used
+        if (!totalsUsed[e.name]) totalsUsed[e.name] = 0;
+        totalsUsed[e.name] += e.transactionAmount ? parseInt(e.transactionAmount) : parseInt(e.quantity) || 0;
+      } else if (e.transactionType === 'IN') {
+        // IN = added/returned (unused)
+        if (!totalsUnused[e.name]) totalsUnused[e.name] = 0;
+        totalsUnused[e.name] += e.transactionAmount ? parseInt(e.transactionAmount) : parseInt(e.quantity) || 0;
+      }
+    });
+
+    const usedRows = Object.entries(totalsUsed).map(([item, qty]) => [item, qty, 'USED']);
+    const unusedRows = Object.entries(totalsUnused).map(([item, qty]) => [item, qty, 'UNUSED']);
+    const rows = [...usedRows, ...unusedRows];
+
+    if (rows.length > 0) {
+      pdf.addPage();
+      pdf.setFontSize(14);
+      pdf.text("Overall Equipment Summary", 14, 15);
+      pdf.autoTable({
+        head: [["Equipment", "Total Quantity", "Status"]],
+        body: rows,
+        startY: 25,
+        theme: "grid"
+      });
+    }
+  }
+
+  pdf.save(`equipment-report-${type}.pdf`);
 }
 </script>
   </body>
