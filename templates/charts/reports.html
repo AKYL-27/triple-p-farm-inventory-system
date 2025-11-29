@@ -747,8 +747,22 @@ async function loadSuppliesChart() {
     const response = await fetch("/api/supplies");
     const supplies = await response.json();
 
+    // Group by product to track changes over time
+    const productHistory = {};
+    
     supplies.forEach(s => {
       s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
+      const key = s.name;
+      
+      if (!productHistory[key]) {
+        productHistory[key] = [];
+      }
+      productHistory[key].push(s);
+    });
+
+    // Sort each product's history by date
+    Object.keys(productHistory).forEach(key => {
+      productHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
     });
 
     // DAILY (last 7 days)
@@ -757,13 +771,32 @@ async function loadSuppliesChart() {
       day.setDate(day.getDate() - i);
       const label = day.toLocaleDateString();
       
-      const totalIn = supplies
-        .filter(s => isSameDay(s.dateAdded, day) && s.transactionType === 'IN')
-        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
-      
-      const totalOut = supplies
-        .filter(s => isSameDay(s.dateAdded, day) && s.transactionType === 'OUT')
-        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      let totalIn = 0;
+      let totalOut = 0;
+
+      // For each product, check what happened on this day
+      Object.keys(productHistory).forEach(productName => {
+        const history = productHistory[productName];
+        
+        for (let j = 0; j < history.length; j++) {
+          const current = history[j];
+          if (!isSameDay(current.dateAdded, day)) continue;
+
+          if (j === 0) {
+            // First record for this product - it's initial stock (IN)
+            totalIn += parseInt(current.quantity) || 0;
+          } else {
+            const previous = history[j - 1];
+            const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+            
+            if (diff > 0) {
+              totalIn += diff;  // Quantity increased
+            } else if (diff < 0) {
+              totalOut += Math.abs(diff);  // Quantity decreased
+            }
+          }
+        }
+      });
 
       chartDataSets.daily.labels.push(label);
       chartDataSets.daily.dataIn.push(totalIn);
@@ -779,13 +812,30 @@ async function loadSuppliesChart() {
 
       const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
       
-      const totalIn = supplies
-        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd && s.transactionType === 'IN')
-        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
-      
-      const totalOut = supplies
-        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd && s.transactionType === 'OUT')
-        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      let totalIn = 0;
+      let totalOut = 0;
+
+      Object.keys(productHistory).forEach(productName => {
+        const history = productHistory[productName];
+        
+        for (let j = 0; j < history.length; j++) {
+          const current = history[j];
+          if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
+
+          if (j === 0) {
+            totalIn += parseInt(current.quantity) || 0;
+          } else {
+            const previous = history[j - 1];
+            const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+            
+            if (diff > 0) {
+              totalIn += diff;
+            } else if (diff < 0) {
+              totalOut += Math.abs(diff);
+            }
+          }
+        }
+      });
 
       chartDataSets.weekly.labels.push(label);
       chartDataSets.weekly.dataIn.push(totalIn);
@@ -801,17 +851,31 @@ async function loadSuppliesChart() {
 
       const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
       
-      const totalIn = supplies
-        .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
-                     s.dateAdded.getFullYear() === month.getFullYear() &&
-                     s.transactionType === 'IN')
-        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
-      
-      const totalOut = supplies
-        .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
-                     s.dateAdded.getFullYear() === month.getFullYear() &&
-                     s.transactionType === 'OUT')
-        .reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      let totalIn = 0;
+      let totalOut = 0;
+
+      Object.keys(productHistory).forEach(productName => {
+        const history = productHistory[productName];
+        
+        for (let j = 0; j < history.length; j++) {
+          const current = history[j];
+          if (current.dateAdded.getMonth() !== month.getMonth() ||
+              current.dateAdded.getFullYear() !== month.getFullYear()) continue;
+
+          if (j === 0) {
+            totalIn += parseInt(current.quantity) || 0;
+          } else {
+            const previous = history[j - 1];
+            const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+            
+            if (diff > 0) {
+              totalIn += diff;
+            } else if (diff < 0) {
+              totalOut += Math.abs(diff);
+            }
+          }
+        }
+      });
 
       chartDataSets.monthly.labels.push(label);
       chartDataSets.monthly.dataIn.push(totalIn);
@@ -902,6 +966,19 @@ function groupProductsByPeriod(supplies) {
   const weekly = {};
   const monthly = {};
 
+  // Group by product to track changes
+  const productHistory = {};
+  supplies.forEach(s => {
+    const key = s.name;
+    if (!productHistory[key]) productHistory[key] = [];
+    productHistory[key].push({...s, dateAdded: new Date(s.dateAdded)});
+  });
+
+  // Sort each product's history by date
+  Object.keys(productHistory).forEach(key => {
+    productHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
+  });
+
   // --- DAILY (last 7 days) ---
   for (let i = 6; i >= 0; i--) {
     const day = new Date();
@@ -909,13 +986,31 @@ function groupProductsByPeriod(supplies) {
     const label = day.toLocaleDateString();
 
     daily[label] = { IN: {}, OUT: {} };
-    supplies
-      .filter(s => isSameDay(new Date(s.dateAdded), day))
-      .forEach(s => {
-        const type = s.transactionType || 'IN';
-        if (!daily[label][type][s.name]) daily[label][type][s.name] = 0;
-        daily[label][type][s.name] += parseInt(s.quantity) || 0;
-      });
+    
+    Object.keys(productHistory).forEach(productName => {
+      const history = productHistory[productName];
+      
+      for (let j = 0; j < history.length; j++) {
+        const current = history[j];
+        if (!isSameDay(current.dateAdded, day)) continue;
+
+        if (j === 0) {
+          if (!daily[label].IN[productName]) daily[label].IN[productName] = 0;
+          daily[label].IN[productName] += parseInt(current.quantity) || 0;
+        } else {
+          const previous = history[j - 1];
+          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+          
+          if (diff > 0) {
+            if (!daily[label].IN[productName]) daily[label].IN[productName] = 0;
+            daily[label].IN[productName] += diff;
+          } else if (diff < 0) {
+            if (!daily[label].OUT[productName]) daily[label].OUT[productName] = 0;
+            daily[label].OUT[productName] += Math.abs(diff);
+          }
+        }
+      }
+    });
   }
 
   // --- WEEKLY (last 4 weeks) ---
@@ -926,15 +1021,32 @@ function groupProductsByPeriod(supplies) {
     weekEnd.setDate(weekStart.getDate() + 6);
 
     const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
-
     weekly[label] = { IN: {}, OUT: {} };
-    supplies
-      .filter(s => new Date(s.dateAdded) >= weekStart && new Date(s.dateAdded) <= weekEnd)
-      .forEach(s => {
-        const type = s.transactionType || 'IN';
-        if (!weekly[label][type][s.name]) weekly[label][type][s.name] = 0;
-        weekly[label][type][s.name] += parseInt(s.quantity) || 0;
-      });
+
+    Object.keys(productHistory).forEach(productName => {
+      const history = productHistory[productName];
+      
+      for (let j = 0; j < history.length; j++) {
+        const current = history[j];
+        if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
+
+        if (j === 0) {
+          if (!weekly[label].IN[productName]) weekly[label].IN[productName] = 0;
+          weekly[label].IN[productName] += parseInt(current.quantity) || 0;
+        } else {
+          const previous = history[j - 1];
+          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+          
+          if (diff > 0) {
+            if (!weekly[label].IN[productName]) weekly[label].IN[productName] = 0;
+            weekly[label].IN[productName] += diff;
+          } else if (diff < 0) {
+            if (!weekly[label].OUT[productName]) weekly[label].OUT[productName] = 0;
+            weekly[label].OUT[productName] += Math.abs(diff);
+          }
+        }
+      }
+    });
   }
 
   // --- MONTHLY (last 12 months) ---
@@ -946,16 +1058,31 @@ function groupProductsByPeriod(supplies) {
     const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
     monthly[label] = { IN: {}, OUT: {} };
 
-    supplies
-      .filter(s => {
-        const d = new Date(s.dateAdded);
-        return d.getMonth() === month.getMonth() && d.getFullYear() === month.getFullYear();
-      })
-      .forEach(s => {
-        const type = s.transactionType || 'IN';
-        if (!monthly[label][type][s.name]) monthly[label][type][s.name] = 0;
-        monthly[label][type][s.name] += parseInt(s.quantity) || 0;
-      });
+    Object.keys(productHistory).forEach(productName => {
+      const history = productHistory[productName];
+      
+      for (let j = 0; j < history.length; j++) {
+        const current = history[j];
+        if (current.dateAdded.getMonth() !== month.getMonth() ||
+            current.dateAdded.getFullYear() !== month.getFullYear()) continue;
+
+        if (j === 0) {
+          if (!monthly[label].IN[productName]) monthly[label].IN[productName] = 0;
+          monthly[label].IN[productName] += parseInt(current.quantity) || 0;
+        } else {
+          const previous = history[j - 1];
+          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
+          
+          if (diff > 0) {
+            if (!monthly[label].IN[productName]) monthly[label].IN[productName] = 0;
+            monthly[label].IN[productName] += diff;
+          } else if (diff < 0) {
+            if (!monthly[label].OUT[productName]) monthly[label].OUT[productName] = 0;
+            monthly[label].OUT[productName] += Math.abs(diff);
+          }
+        }
+      }
+    });
   }
 
   return { daily, weekly, monthly };
@@ -973,14 +1100,10 @@ document.getElementById("printBtn").addEventListener("click", function (e) {
 async function generateSupplyReportPDF(type) {
   const { jsPDF } = window.jspdf;
 
-  // Fetch supplies
   const response = await fetch("/api/supplies");
   const supplies = await response.json();
-
-  // Group products
   const grouped = groupProductsByPeriod(supplies);
 
-  // --- Build a temporary chart for the selected type ---
   const canvas = document.createElement("canvas");
   canvas.width = 800;
   canvas.height = 400;
@@ -1015,23 +1138,18 @@ async function generateSupplyReportPDF(type) {
     }
   });
 
-  // Wait until chart is rendered
   await new Promise(resolve => setTimeout(resolve, 500));
-
   const chartImage = canvas.toDataURL("image/png");
   chart.destroy();
 
-  // --- Start building PDF ---
   const pdf = new jsPDF("landscape", "mm", "a4");
   pdf.setFontSize(16);
   pdf.text("Supply Report - IN/OUT", 14, 15);
 
-  // Add chart (specific to selection)
   const imgWidth = 280;
   const imgHeight = canvas.height * imgWidth / canvas.width;
   pdf.addImage(chartImage, "PNG", 10, 25, imgWidth, imgHeight);
 
-  // --- Helper to add tables with IN/OUT separation ---
   function addTables(title, dataObj) {
     const labelsWithData = Object.keys(dataObj).filter(
       (label) => Object.keys(dataObj[label].IN).length > 0 || Object.keys(dataObj[label].OUT).length > 0
@@ -1044,11 +1162,8 @@ async function generateSupplyReportPDF(type) {
     pdf.text(title, 14, 15);
 
     labelsWithData.forEach((label) => {
-      // IN transactions
       const inRows = Object.entries(dataObj[label].IN).map(([prod, qty]) => [prod, qty, 'IN']);
-      // OUT transactions
       const outRows = Object.entries(dataObj[label].OUT).map(([prod, qty]) => [prod, qty, 'OUT']);
-      
       const allRows = [...inRows, ...outRows];
       
       if (allRows.length > 0) {
@@ -1062,45 +1177,12 @@ async function generateSupplyReportPDF(type) {
     });
   }
 
-  // --- Add breakdown based on type ---
   if (type === "daily") addTables("Daily Breakdown", grouped.daily);
   if (type === "weekly") addTables("Weekly Breakdown", grouped.weekly);
   if (type === "monthly") addTables("Monthly Breakdown", grouped.monthly);
 
-  if (type === "overall") {
-    const totalsIn = {};
-    const totalsOut = {};
-    supplies.forEach(s => {
-      if (s.transactionType === 'IN') {
-        if (!totalsIn[s.name]) totalsIn[s.name] = 0;
-        totalsIn[s.name] += parseInt(s.quantity) || 0;
-      } else if (s.transactionType === 'OUT') {
-        if (!totalsOut[s.name]) totalsOut[s.name] = 0;
-        totalsOut[s.name] += parseInt(s.quantity) || 0;
-      }
-    });
-
-    const inRows = Object.entries(totalsIn).map(([prod, qty]) => [prod, qty, 'IN']);
-    const outRows = Object.entries(totalsOut).map(([prod, qty]) => [prod, qty, 'OUT']);
-    const rows = [...inRows, ...outRows];
-
-    if (rows.length > 0) {
-      pdf.addPage();
-      pdf.setFontSize(14);
-      pdf.text("Overall Product Summary", 14, 15);
-      pdf.autoTable({
-        head: [["Product", "Total Quantity", "Type"]],
-        body: rows,
-        startY: 25,
-        theme: "grid"
-      });
-    }
-  }
-
-  // Save with filename based on selection
   pdf.save(`supply-report-${type}.pdf`);
 }
 </script>
-
   </body>
 </html>
