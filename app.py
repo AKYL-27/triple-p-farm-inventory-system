@@ -682,6 +682,7 @@ def update_equipment(equipment_id):
         # Determine transaction type based on what's provided
         transaction_type = "ADMIN_UPDATE"
         new_quantity = current_equipment["quantity"]  # Start with current quantity
+        transaction_amount = 0
         
         # Check if IN or OUT quantities are provided
         has_in = data.get("inQuantity") and str(data.get("inQuantity")).strip() != ""
@@ -693,6 +694,7 @@ def update_equipment(equipment_id):
             if in_qty > 0:
                 new_quantity = current_equipment["quantity"] + in_qty
                 transaction_type = "IN"
+                transaction_amount = in_qty
         
         # Handle OUT quantity (subtract from current quantity)
         if has_out:
@@ -700,6 +702,7 @@ def update_equipment(equipment_id):
             if out_qty > 0:
                 new_quantity = max(0, current_equipment["quantity"] - out_qty)
                 transaction_type = "OUT"
+                transaction_amount = out_qty
         
         # If both IN and OUT are provided, calculate net change
         if has_in and has_out:
@@ -708,6 +711,7 @@ def update_equipment(equipment_id):
             net_change = in_qty - out_qty
             new_quantity = max(0, current_equipment["quantity"] + net_change)
             transaction_type = "IN" if net_change > 0 else "OUT" if net_change < 0 else "ADJUSTED"
+            transaction_amount = abs(net_change)
         
         # If neither IN nor OUT provided, use the quantity from the form (manual edit)
         if not has_in and not has_out:
