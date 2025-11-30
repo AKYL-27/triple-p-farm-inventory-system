@@ -34,6 +34,7 @@ EQUIPMENT_COLLECTION = os.getenv("EQUIPMENT_COLLECTION")
 FARMERS_COLLECTION = os.getenv("FARMERS_COLLECTION")
 BORROW_HISTORY_COLLECTION = os.getenv("BORROW_HISTORY_COLLECTION")
 USERS_COLLECTION = os.getenv("USERS_COLLECTION", "users")
+SUPPLY_TRANSACTIONS_COLLECTION = os.getenv("SUPPLY_TRANSACTIONS_COLLECTION")
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
@@ -42,6 +43,7 @@ equipment_collection = db[EQUIPMENT_COLLECTION]
 farmers_collection = db[FARMERS_COLLECTION]
 borrow_history_collection = db[BORROW_HISTORY_COLLECTION]
 users_collection = db[USERS_COLLECTION]
+supply_transactions_collection = db[SUPPLY_TRANSACTIONS_COLLECTION]
 
 print("Connected to DB:", DB_NAME)
 
@@ -389,6 +391,22 @@ def update_supply(supply_id):
         if not data.get("inQuantity") and not data.get("outQuantity"):
             transaction_type = "UPDATED"
             transaction_amount = 0  # NEW: No transaction amount for updates
+
+        # ===== ADD THIS SECTION - Save transaction to history =====
+        if transaction_amount > 0 and transaction_type in ["IN", "OUT"]:
+            transaction_record = {
+                "supplyId": supply_id,
+                "supplyName": current_supply["name"],
+                "transactionType": transaction_type,
+                "transactionAmount": transaction_amount,
+                "dateAdded": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "previousQuantity": current_supply["quantity"],
+                "newQuantity": new_quantity,
+                "unitPrice": float(data.get("unitPrice", current_supply.get("unitPrice", 0))),
+                "expirationDate": data.get("expirationDate", current_supply.get("expirationDate"))
+            }
+            supply_transactions_collection.insert_one(transaction_record)
+        # ===== END OF NEW SECTION =====
         
         update_data = {
             "name": data.get("name"),
@@ -600,6 +618,13 @@ def inventory_statistics():
 
     return jsonify(stats)
 
+# New endpoint to get supply transaction history
+@app.route('/api/supplies/transactions', methods=['GET'])
+def get_supply_transactions():
+    transactions = list(supply_transactions_collection.find())
+    for t in transactions:
+        t["_id"] = str(t["_id"])
+    return jsonify(transactions)
     
 #Create Equipment
 @app.route('/inventory/equipment', methods=['POST'])
