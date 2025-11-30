@@ -1288,7 +1288,7 @@ async function generateSupplyReportPDF(type) {
 
 
   <!--equpment-->
-    <script>
+   <script>
 let equipmentChartInstance;
 let equipmentChartDataSets = {
   daily: { labels: [], dataUsed: [], dataUnused: [] },
@@ -1475,6 +1475,11 @@ async function generateEquipmentReportPDF(type) {
 
   const response = await fetch("/api/equipment/transactions");
   const transactions = await response.json();
+  
+  // Process dates
+  transactions.forEach(t => {
+    t.dateAdded = t.dateAdded ? new Date(t.dateAdded) : new Date();
+  });
 
   const canvas = document.createElement("canvas");
   canvas.width = 800;
@@ -1515,14 +1520,220 @@ async function generateEquipmentReportPDF(type) {
   chart.destroy();
 
   const pdf = new jsPDF("landscape", "mm", "a4");
-  pdf.setFontSize(16);
-  pdf.text("Equipment Report - USED/UNUSED", 14, 15);
+  
+  // Title and Date
+  pdf.setFontSize(18);
+  pdf.setFont(undefined, 'bold');
+  pdf.text(`Equipment Report - ${type.toUpperCase()}`, 14, 15);
+  pdf.setFontSize(10);
+  pdf.setFont(undefined, 'normal');
+  pdf.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
 
-  const imgWidth = 280;
+  // Add chart
+  const imgWidth = 260;
   const imgHeight = canvas.height * imgWidth / canvas.width;
-  pdf.addImage(chartImage, "PNG", 10, 25, imgWidth, imgHeight);
+  pdf.addImage(chartImage, "PNG", 15, 28, imgWidth, imgHeight);
 
-  pdf.save(`equipment-report-${type}.pdf`);
+  // Calculate summary statistics
+  let totalUsed = 0;
+  let totalUnused = 0;
+  const equipmentStats = {};
+
+  transactions.forEach(t => {
+    const amount = parseInt(t.transactionAmount) || 0;
+    
+    if (!equipmentStats[t.equipmentName]) {
+      equipmentStats[t.equipmentName] = { used: 0, unused: 0, lastUsed: null };
+    }
+    
+    if (t.transactionType === 'OUT') {
+      totalUsed += amount;
+      equipmentStats[t.equipmentName].used += amount;
+      if (!equipmentStats[t.equipmentName].lastUsed || t.dateAdded > equipmentStats[t.equipmentName].lastUsed) {
+        equipmentStats[t.equipmentName].lastUsed = t.dateAdded;
+      }
+    } else if (t.transactionType === 'IN') {
+      totalUnused += amount;
+      equipmentStats[t.equipmentName].unused += amount;
+    }
+  });
+
+  // Summary Section
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text("EXECUTIVE SUMMARY", 14, 15);
+  
+  pdf.autoTable({
+    startY: 22,
+    head: [['Metric', 'Value']],
+    body: [
+      ['Total Equipment Added', totalUnused.toString()],
+      ['Total Equipment Used', totalUsed.toString()],
+      ['Net Available', (totalUnused - totalUsed).toString()],
+      ['Utilization Rate', totalUnused > 0 ? ((totalUsed / totalUnused) * 100).toFixed(1) + '%' : '0%']
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [29, 122, 243], fontSize: 11, fontStyle: 'bold' },
+    styles: { fontSize: 10 }
+  });
+
+  // Equipment Usage Breakdown
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  const summaryEndY = pdf.lastAutoTable.finalY + 10;
+  pdf.text("EQUIPMENT USAGE BREAKDOWN", 14, summaryEndY);
+
+  const equipmentRows = Object.entries(equipmentStats)
+    .map(([name, stats]) => {
+      const total = stats.used + stats.unused;
+      const utilizationRate = total > 0 ? ((stats.used / total) * 100).toFixed(1) + '%' : '0%';
+      const lastUsedStr = stats.lastUsed ? stats.lastUsed.toLocaleDateString() : 'Never';
+      return [name, stats.unused, stats.used, total, utilizationRate, lastUsedStr];
+    })
+    .sort((a, b) => b[2] - a[2]); // Sort by most used
+
+  pdf.autoTable({
+    startY: summaryEndY + 5,
+    head: [['Equipment Name', 'Added', 'Used', 'Total', 'Usage Rate', 'Last Used']],
+    body: equipmentRows,
+    theme: 'striped',
+    headStyles: { fillColor: [29, 122, 243], fontSize: 10, fontStyle: 'bold' },
+    styles: { fontSize: 9 },
+    columnStyles: {
+      0: { cellWidth: 60 },
+      1: { halign: 'center' },
+      2: { halign: 'center' },
+      3: { halign: 'center' },
+      4: { halign: 'center' },
+      5: { halign: 'center' }
+    }
+  });
+
+  // Detailed Transaction Log
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text("DETAILED TRANSACTION LOG", 14, 15);
+
+  const transactionRows = transactions
+    .sort((a, b) => b.dateAdded - a.dateAdded)
+    .slice(0, 50) // Show last 50 transactions
+    .map(t => [
+      t.dateAdded.toLocaleDateString(),
+      t.equipmentName,
+      t.transactionType,
+      t.transactionAmount.toString(),
+      t.previousQuantity ? t.previousQuantity.toString() : '-',
+      t.newQuantity ? t.newQuantity.toString() : '-'
+    ]);
+
+  pdf.autoTable({
+    startY: 22,
+    head: [['Date', 'Equipment', 'Type', 'Amount', 'Before', 'After']],
+    body: transactionRows,
+    theme: 'grid',
+    headStyles: { fillColor: [29, 122, 243], fontSize: 10, fontStyle: 'bold' },
+    styles: { fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 60 },
+      2: { cellWidth: 20, halign: 'center' },
+      3: { halign: 'center' },
+      4: { halign: 'center' },
+      5: { halign: 'center' }
+    },
+    didDrawCell: function(data) {
+      // Highlight OUT transactions in red
+      if (data.section === 'body' && data.column.index === 2 && data.cell.raw === 'OUT') {
+        pdf.setTextColor(243, 84, 93);
+        pdf.text('OUT', data.cell.x + 5, data.cell.y + 5);
+        pdf.setTextColor(0, 0, 0);
+      }
+    }
+  });
+
+  // Insights & Recommendations
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text("INSIGHTS & RECOMMENDATIONS", 14, 15);
+  
+  pdf.setFontSize(10);
+  pdf.setFont(undefined, 'normal');
+  
+  // Find most used equipment
+  const mostUsed = Object.entries(equipmentStats)
+    .sort((a, b) => b[1].used - a[1].used)[0];
+  
+  // Find least used equipment
+  const leastUsed = Object.entries(equipmentStats)
+    .filter(([name, stats]) => stats.unused > 0)
+    .sort((a, b) => a[1].used - b[1].used)[0];
+  
+  // Find equipment not used recently
+  const notUsedRecently = Object.entries(equipmentStats)
+    .filter(([name, stats]) => {
+      if (!stats.lastUsed) return true;
+      const daysSinceUse = (new Date() - stats.lastUsed) / (1000 * 60 * 60 * 24);
+      return daysSinceUse > 30;
+    });
+
+  let yPos = 25;
+  
+  if (mostUsed) {
+    pdf.setFont(undefined, 'bold');
+    pdf.text("• Most Used Equipment:", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`${mostUsed[0]} (${mostUsed[1].used} units used)`, 25, yPos + 5);
+    pdf.text(`Consider maintaining higher stock levels for this item.`, 25, yPos + 10);
+    yPos += 20;
+  }
+  
+  if (leastUsed) {
+    pdf.setFont(undefined, 'bold');
+    pdf.text("• Least Used Equipment:", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`${leastUsed[0]} (only ${leastUsed[1].used} units used)`, 25, yPos + 5);
+    pdf.text(`Consider reducing stock or reallocating resources.`, 25, yPos + 10);
+    yPos += 20;
+  }
+  
+  if (notUsedRecently.length > 0) {
+    pdf.setFont(undefined, 'bold');
+    pdf.text("• Equipment Not Used Recently (30+ days):", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    notUsedRecently.slice(0, 5).forEach(([name, stats]) => {
+      yPos += 5;
+      const daysAgo = stats.lastUsed ? 
+        Math.floor((new Date() - stats.lastUsed) / (1000 * 60 * 60 * 24)) : 
+        'Never';
+      pdf.text(`- ${name} (Last used: ${daysAgo === 'Never' ? 'Never' : daysAgo + ' days ago'})`, 25, yPos);
+    });
+    yPos += 10;
+    pdf.text(`Review if these items are still needed in inventory.`, 25, yPos);
+  }
+  
+  yPos += 15;
+  const avgUtilization = Object.values(equipmentStats).reduce((sum, s) => {
+    const total = s.used + s.unused;
+    return sum + (total > 0 ? (s.used / total) : 0);
+  }, 0) / Object.keys(equipmentStats).length;
+  
+  pdf.setFont(undefined, 'bold');
+  pdf.text("• Overall Equipment Utilization:", 14, yPos);
+  pdf.setFont(undefined, 'normal');
+  pdf.text(`Average: ${(avgUtilization * 100).toFixed(1)}%`, 25, yPos + 5);
+  
+  if (avgUtilization < 0.5) {
+    pdf.text(`Low utilization detected. Consider reviewing procurement practices.`, 25, yPos + 10);
+  } else if (avgUtilization > 0.8) {
+    pdf.text(`High utilization. Monitor stock levels to prevent shortages.`, 25, yPos + 10);
+  } else {
+    pdf.text(`Utilization is within healthy range (50-80%).`, 25, yPos + 10);
+  }
+
+  pdf.save(`equipment-report-${type}-${new Date().toISOString().split('T')[0]}.pdf`);
 }
 </script>
   </body>
