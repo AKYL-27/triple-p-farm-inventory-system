@@ -375,7 +375,7 @@
     <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('daily')">Daily</a></li>
     <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('weekly')">Weekly</a></li>
     <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('monthly')">Monthly</a></li>
-    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>
+    <!--<li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>-->
   </ul>
 </div>
 
@@ -416,7 +416,7 @@
               <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('daily')">Daily</a></li>
               <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('weekly')">Weekly</a></li>
               <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('monthly')">Monthly</a></li>
-              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('overall')">Overall</a></li>
+              <!--<li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('overall')">Overall</a></li>-->
             </ul>
           </div>
         </div>
@@ -790,77 +790,32 @@ async function loadSuppliesChart() {
     console.log("Total supplies records:", supplies.length);
     console.log("Sample records:", supplies.slice(0, 3));
 
-    // Group by product to track changes over time
-    const productHistory = {};
-    
+    // Process dates
     supplies.forEach(s => {
       s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
-      const key = s.name;
-      
-      if (!productHistory[key]) {
-        productHistory[key] = [];
-      }
-      productHistory[key].push(s);
-    });
-
-    // Sort each product's history by date
-    Object.keys(productHistory).forEach(key => {
-      productHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
-      if (productHistory[key].length > 1) {
-        console.log(`Product "${key}" has ${productHistory[key].length} records`);
-      }
     });
 
     // DAILY (last 7 days)
     for (let i = 6; i >= 0; i--) {
       const day = new Date();
       day.setDate(day.getDate() - i);
+      day.setHours(0, 0, 0, 0);
       const label = day.toLocaleDateString();
       
       let totalIn = 0;
       let totalOut = 0;
 
-      // Check if we have multiple records per product (history tracking)
-      const hasHistory = Object.values(productHistory).some(h => h.length > 1);
-
-      if (hasHistory) {
-        // Use history-based calculation
-        Object.keys(productHistory).forEach(productName => {
-          const history = productHistory[productName];
+      supplies
+        .filter(s => isSameDay(s.dateAdded, day))
+        .forEach(s => {
+          const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
           
-          for (let j = 0; j < history.length; j++) {
-            const current = history[j];
-            if (!isSameDay(current.dateAdded, day)) continue;
-
-            if (j === 0) {
-              totalIn += parseInt(current.quantity) || 0;
-            } else {
-              const previous = history[j - 1];
-              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-              
-              if (diff > 0) {
-                totalIn += diff;
-              } else if (diff < 0) {
-                totalOut += Math.abs(diff);
-              }
-            }
+          if (s.transactionType === 'IN') {
+            totalIn += amount;
+          } else if (s.transactionType === 'OUT') {
+            totalOut += amount;
           }
         });
-      } else {
-        // Fallback: Use transactionType field with transactionAmount
-        supplies
-          .filter(s => isSameDay(s.dateAdded, day))
-          .forEach(s => {
-            // Use transactionAmount if available, otherwise use quantity
-            const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-            
-            if (s.transactionType === 'IN') {
-              totalIn += amount;
-            } else if (s.transactionType === 'OUT') {
-              totalOut += amount;
-            }
-          });
-      }
 
       chartDataSets.daily.labels.push(label);
       chartDataSets.daily.dataIn.push(totalIn);
@@ -871,59 +826,38 @@ async function loadSuppliesChart() {
       }
     }
 
-    // WEEKLY (last 4 weeks)
+    // WEEKLY (last 4 weeks) - FIXED
     for (let i = 3; i >= 0; i--) {
-      const weekStart = getStartOfWeek(new Date());
-      weekStart.setDate(weekStart.getDate() - i * 7);
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - (weekStart.getDay()) - (i * 7));
+      weekStart.setHours(0, 0, 0, 0);
+      
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
 
       const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
       
       let totalIn = 0;
       let totalOut = 0;
 
-      const hasHistory = Object.values(productHistory).some(h => h.length > 1);
-
-      if (hasHistory) {
-        Object.keys(productHistory).forEach(productName => {
-          const history = productHistory[productName];
+      supplies
+        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
+        .forEach(s => {
+          const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
           
-          for (let j = 0; j < history.length; j++) {
-            const current = history[j];
-            if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
-
-            if (j === 0) {
-              totalIn += parseInt(current.quantity) || 0;
-            } else {
-              const previous = history[j - 1];
-              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-              
-              if (diff > 0) {
-                totalIn += diff;
-              } else if (diff < 0) {
-                totalOut += Math.abs(diff);
-              }
-            }
+          if (s.transactionType === 'IN') {
+            totalIn += amount;
+          } else if (s.transactionType === 'OUT') {
+            totalOut += amount;
           }
         });
-      } else {
-        supplies
-          .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
-          .forEach(s => {
-            const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-            
-            if (s.transactionType === 'IN') {
-              totalIn += amount;
-            } else if (s.transactionType === 'OUT') {
-              totalOut += amount;
-            }
-          });
-      }
 
       chartDataSets.weekly.labels.push(label);
       chartDataSets.weekly.dataIn.push(totalIn);
       chartDataSets.weekly.dataOut.push(totalOut);
+      
+      console.log(`Week ${label}: IN=${totalIn}, OUT=${totalOut}`);
     }
 
     // MONTHLY (last 12 months)
@@ -932,51 +866,26 @@ async function loadSuppliesChart() {
     for (let i = 11; i >= 0; i--) {
       const month = new Date();
       month.setMonth(month.getMonth() - i);
+      month.setDate(1);
+      month.setHours(0, 0, 0, 0);
 
       const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
       
       let totalIn = 0;
       let totalOut = 0;
 
-      const hasHistory = Object.values(productHistory).some(h => h.length > 1);
-
-      if (hasHistory) {
-        Object.keys(productHistory).forEach(productName => {
-          const history = productHistory[productName];
+      supplies
+        .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
+                     s.dateAdded.getFullYear() === month.getFullYear())
+        .forEach(s => {
+          const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
           
-          for (let j = 0; j < history.length; j++) {
-            const current = history[j];
-            if (current.dateAdded.getMonth() !== month.getMonth() ||
-                current.dateAdded.getFullYear() !== month.getFullYear()) continue;
-
-            if (j === 0) {
-              totalIn += parseInt(current.quantity) || 0;
-            } else {
-              const previous = history[j - 1];
-              const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-              
-              if (diff > 0) {
-                totalIn += diff;
-              } else if (diff < 0) {
-                totalOut += Math.abs(diff);
-              }
-            }
+          if (s.transactionType === 'IN') {
+            totalIn += amount;
+          } else if (s.transactionType === 'OUT') {
+            totalOut += amount;
           }
         });
-      } else {
-        supplies
-          .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
-                       s.dateAdded.getFullYear() === month.getFullYear())
-          .forEach(s => {
-            const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-            
-            if (s.transactionType === 'IN') {
-              totalIn += amount;
-            } else if (s.transactionType === 'OUT') {
-              totalOut += amount;
-            }
-          });
-      }
 
       chartDataSets.monthly.labels.push(label);
       chartDataSets.monthly.dataIn.push(totalIn);
@@ -1062,148 +971,16 @@ document.addEventListener("DOMContentLoaded", loadSuppliesChart);
 </script>
 
 <script>
-function groupProductsByPeriod(supplies) {
-  const daily = {};
-  const weekly = {};
-  const monthly = {};
-
-  // Group by product to track changes
-  const productHistory = {};
-  supplies.forEach(s => {
-    const key = s.name;
-    if (!productHistory[key]) productHistory[key] = [];
-    productHistory[key].push({...s, dateAdded: new Date(s.dateAdded)});
-  });
-
-  // Sort each product's history by date
-  Object.keys(productHistory).forEach(key => {
-    productHistory[key].sort((a, b) => a.dateAdded - b.dateAdded);
-  });
-
-  // --- DAILY (last 7 days) ---
-  for (let i = 6; i >= 0; i--) {
-    const day = new Date();
-    day.setDate(day.getDate() - i);
-    const label = day.toLocaleDateString();
-
-    daily[label] = { IN: {}, OUT: {} };
-    
-    Object.keys(productHistory).forEach(productName => {
-      const history = productHistory[productName];
-      
-      for (let j = 0; j < history.length; j++) {
-        const current = history[j];
-        if (!isSameDay(current.dateAdded, day)) continue;
-
-        if (j === 0) {
-          if (!daily[label].IN[productName]) daily[label].IN[productName] = 0;
-          daily[label].IN[productName] += parseInt(current.quantity) || 0;
-        } else {
-          const previous = history[j - 1];
-          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-          
-          if (diff > 0) {
-            if (!daily[label].IN[productName]) daily[label].IN[productName] = 0;
-            daily[label].IN[productName] += diff;
-          } else if (diff < 0) {
-            if (!daily[label].OUT[productName]) daily[label].OUT[productName] = 0;
-            daily[label].OUT[productName] += Math.abs(diff);
-          }
-        }
-      }
-    });
-  }
-
-  // --- WEEKLY (last 4 weeks) ---
-  for (let i = 3; i >= 0; i--) {
-    const weekStart = getStartOfWeek(new Date());
-    weekStart.setDate(weekStart.getDate() - i * 7);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-
-    const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
-    weekly[label] = { IN: {}, OUT: {} };
-
-    Object.keys(productHistory).forEach(productName => {
-      const history = productHistory[productName];
-      
-      for (let j = 0; j < history.length; j++) {
-        const current = history[j];
-        if (current.dateAdded < weekStart || current.dateAdded > weekEnd) continue;
-
-        if (j === 0) {
-          if (!weekly[label].IN[productName]) weekly[label].IN[productName] = 0;
-          weekly[label].IN[productName] += parseInt(current.quantity) || 0;
-        } else {
-          const previous = history[j - 1];
-          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-          
-          if (diff > 0) {
-            if (!weekly[label].IN[productName]) weekly[label].IN[productName] = 0;
-            weekly[label].IN[productName] += diff;
-          } else if (diff < 0) {
-            if (!weekly[label].OUT[productName]) weekly[label].OUT[productName] = 0;
-            weekly[label].OUT[productName] += Math.abs(diff);
-          }
-        }
-      }
-    });
-  }
-
-  // --- MONTHLY (last 12 months) ---
-  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  for (let i = 11; i >= 0; i--) {
-    const month = new Date();
-    month.setMonth(month.getMonth() - i);
-
-    const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-    monthly[label] = { IN: {}, OUT: {} };
-
-    Object.keys(productHistory).forEach(productName => {
-      const history = productHistory[productName];
-      
-      for (let j = 0; j < history.length; j++) {
-        const current = history[j];
-        if (current.dateAdded.getMonth() !== month.getMonth() ||
-            current.dateAdded.getFullYear() !== month.getFullYear()) continue;
-
-        if (j === 0) {
-          if (!monthly[label].IN[productName]) monthly[label].IN[productName] = 0;
-          monthly[label].IN[productName] += parseInt(current.quantity) || 0;
-        } else {
-          const previous = history[j - 1];
-          const diff = (parseInt(current.quantity) || 0) - (parseInt(previous.quantity) || 0);
-          
-          if (diff > 0) {
-            if (!monthly[label].IN[productName]) monthly[label].IN[productName] = 0;
-            monthly[label].IN[productName] += diff;
-          } else if (diff < 0) {
-            if (!monthly[label].OUT[productName]) monthly[label].OUT[productName] = 0;
-            monthly[label].OUT[productName] += Math.abs(diff);
-          }
-        }
-      }
-    });
-  }
-
-  return { daily, weekly, monthly };
-}
-</script>
-
-<script>
-document.getElementById("printBtn").addEventListener("click", function (e) {
-  e.preventDefault();
-  generateSupplyReportPDF();
-});
-</script>
-
-<script>
 async function generateSupplyReportPDF(type) {
   const { jsPDF } = window.jspdf;
 
   const response = await fetch("/api/supplies");
   const supplies = await response.json();
-  const grouped = groupProductsByPeriod(supplies);
+  
+  // Process dates
+  supplies.forEach(s => {
+    s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
+  });
 
   const canvas = document.createElement("canvas");
   canvas.width = 800;
@@ -1244,45 +1021,249 @@ async function generateSupplyReportPDF(type) {
   chart.destroy();
 
   const pdf = new jsPDF("landscape", "mm", "a4");
-  pdf.setFontSize(16);
-  pdf.text("Supply Report - IN/OUT", 14, 15);
+  
+  // Title and Date
+  pdf.setFontSize(18);
+  pdf.setFont(undefined, 'bold');
+  pdf.text(`Seedling Supply Report - ${type.toUpperCase()}`, 14, 15);
+  pdf.setFontSize(10);
+  pdf.setFont(undefined, 'normal');
+  pdf.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
 
-  const imgWidth = 280;
+  // Add chart
+  const imgWidth = 260;
   const imgHeight = canvas.height * imgWidth / canvas.width;
-  pdf.addImage(chartImage, "PNG", 10, 25, imgWidth, imgHeight);
+  pdf.addImage(chartImage, "PNG", 15, 28, imgWidth, imgHeight);
 
-  function addTables(title, dataObj) {
-    const labelsWithData = Object.keys(dataObj).filter(
-      (label) => Object.keys(dataObj[label].IN).length > 0 || Object.keys(dataObj[label].OUT).length > 0
-    );
+  // Calculate summary statistics
+  let totalIn = 0;
+  let totalOut = 0;
+  const supplyStats = {};
 
-    if (labelsWithData.length === 0) return;
+  supplies.forEach(s => {
+    const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+    
+    if (!supplyStats[s.name]) {
+      supplyStats[s.name] = { in: 0, out: 0, lastTransaction: null };
+    }
+    
+    if (s.transactionType === 'IN') {
+      totalIn += amount;
+      supplyStats[s.name].in += amount;
+    } else if (s.transactionType === 'OUT') {
+      totalOut += amount;
+      supplyStats[s.name].out += amount;
+    }
+    
+    if (!supplyStats[s.name].lastTransaction || s.dateAdded > supplyStats[s.name].lastTransaction) {
+      supplyStats[s.name].lastTransaction = s.dateAdded;
+    }
+  });
 
-    pdf.addPage();
-    pdf.setFontSize(14);
-    pdf.text(title, 14, 15);
+  // Summary Section
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text("EXECUTIVE SUMMARY", 14, 15);
+  
+  pdf.autoTable({
+    startY: 22,
+    head: [['Metric', 'Value']],
+    body: [
+      ['Total Supplies Added (IN)', totalIn.toString()],
+      ['Total Supplies Distributed (OUT)', totalOut.toString()],
+      ['Net Available Stock', (totalIn - totalOut).toString()],
+      ['Distribution Rate', totalIn > 0 ? ((totalOut / totalIn) * 100).toFixed(1) + '%' : '0%']
+    ],
+    theme: 'grid',
+    headStyles: { fillColor: [29, 122, 243], fontSize: 11, fontStyle: 'bold' },
+    styles: { fontSize: 10 }
+  });
 
-    labelsWithData.forEach((label) => {
-      const inRows = Object.entries(dataObj[label].IN).map(([prod, qty]) => [prod, qty, 'IN']);
-      const outRows = Object.entries(dataObj[label].OUT).map(([prod, qty]) => [prod, qty, 'OUT']);
-      const allRows = [...inRows, ...outRows];
-      
-      if (allRows.length > 0) {
-        pdf.autoTable({
-          head: [[label, "Quantity", "Type"]],
-          body: allRows,
-          startY: pdf.lastAutoTable ? pdf.lastAutoTable.finalY + 10 : 25,
-          theme: "grid"
-        });
-      }
+  // Supply Breakdown
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  const summaryEndY = pdf.lastAutoTable.finalY + 10;
+  pdf.text("SUPPLY BREAKDOWN BY PRODUCT", 14, summaryEndY);
+
+  const supplyRows = Object.entries(supplyStats)
+    .map(([name, stats]) => {
+      const total = stats.in + stats.out;
+      const distributionRate = stats.in > 0 ? ((stats.out / stats.in) * 100).toFixed(1) + '%' : '0%';
+      const currentStock = stats.in - stats.out;
+      const lastTransactionStr = stats.lastTransaction ? stats.lastTransaction.toLocaleDateString() : 'Never';
+      return [name, stats.in, stats.out, currentStock, distributionRate, lastTransactionStr];
+    })
+    .sort((a, b) => b[2] - a[2]); // Sort by most distributed
+
+  pdf.autoTable({
+    startY: summaryEndY + 5,
+    head: [['Product Name', 'Received', 'Distributed', 'Current Stock', 'Distribution Rate', 'Last Activity']],
+    body: supplyRows,
+    theme: 'striped',
+    headStyles: { fillColor: [29, 122, 243], fontSize: 10, fontStyle: 'bold' },
+    styles: { fontSize: 9 },
+    columnStyles: {
+      0: { cellWidth: 60 },
+      1: { halign: 'center' },
+      2: { halign: 'center' },
+      3: { halign: 'center' },
+      4: { halign: 'center' },
+      5: { halign: 'center' }
+    }
+  });
+
+  // Detailed Transaction Log
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text("DETAILED TRANSACTION LOG", 14, 15);
+
+  const transactionRows = supplies
+    .sort((a, b) => b.dateAdded - a.dateAdded)
+    .slice(0, 50) // Show last 50 transactions
+    .map(s => {
+      const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      return [
+        s.dateAdded.toLocaleDateString(),
+        s.name,
+        s.transactionType,
+        amount.toString(),
+        s.quantity.toString()
+      ];
     });
+
+  pdf.autoTable({
+    startY: 22,
+    head: [['Date', 'Product', 'Type', 'Amount', 'Current Stock']],
+    body: transactionRows,
+    theme: 'grid',
+    headStyles: { fillColor: [29, 122, 243], fontSize: 10, fontStyle: 'bold' },
+    styles: { fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: 30 },
+      1: { cellWidth: 70 },
+      2: { cellWidth: 20, halign: 'center' },
+      3: { halign: 'center' },
+      4: { halign: 'center' }
+    },
+    didDrawCell: function(data) {
+      if (data.section === 'body' && data.column.index === 2) {
+        if (data.cell.raw === 'OUT') {
+          pdf.setTextColor(243, 84, 93);
+          pdf.text('OUT', data.cell.x + 5, data.cell.y + 5);
+          pdf.setTextColor(0, 0, 0);
+        } else if (data.cell.raw === 'IN') {
+          pdf.setTextColor(29, 122, 243);
+          pdf.text('IN', data.cell.x + 5, data.cell.y + 5);
+          pdf.setTextColor(0, 0, 0);
+        }
+      }
+    }
+  });
+
+  // Insights & Recommendations
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text("INSIGHTS & RECOMMENDATIONS", 14, 15);
+  
+  pdf.setFontSize(10);
+  pdf.setFont(undefined, 'normal');
+  
+  // Find most distributed supply
+  const mostDistributed = Object.entries(supplyStats)
+    .sort((a, b) => b[1].out - a[1].out)[0];
+  
+  // Find least distributed supply
+  const leastDistributed = Object.entries(supplyStats)
+    .filter(([name, stats]) => stats.in > 0)
+    .sort((a, b) => a[1].out - b[1].out)[0];
+  
+  // Find low stock items
+  const lowStockItems = Object.entries(supplyStats)
+    .filter(([name, stats]) => {
+      const currentStock = stats.in - stats.out;
+      return currentStock > 0 && currentStock < 10; // Low stock threshold
+    });
+  
+  // Find overstocked items
+  const overStockedItems = Object.entries(supplyStats)
+    .filter(([name, stats]) => {
+      const currentStock = stats.in - stats.out;
+      const distributionRate = stats.in > 0 ? (stats.out / stats.in) : 0;
+      return currentStock > 50 && distributionRate < 0.3; // High stock, low distribution
+    });
+
+  let yPos = 25;
+  
+  if (mostDistributed) {
+    pdf.setFont(undefined, 'bold');
+    pdf.text("• Most Distributed Supply:", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`${mostDistributed[0]} (${mostDistributed[1].out} units distributed)`, 25, yPos + 5);
+    pdf.text(`High demand item - ensure adequate stock levels.`, 25, yPos + 10);
+    yPos += 20;
+  }
+  
+  if (leastDistributed) {
+    pdf.setFont(undefined, 'bold');
+    pdf.text("• Least Distributed Supply:", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    pdf.text(`${leastDistributed[0]} (only ${leastDistributed[1].out} units distributed)`, 25, yPos + 5);
+    pdf.text(`Low demand - review if procurement is necessary.`, 25, yPos + 10);
+    yPos += 20;
+  }
+  
+  if (lowStockItems.length > 0) {
+    pdf.setFont(undefined, 'bold');
+    pdf.text("⚠ Low Stock Alert (Less than 10 units):", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    lowStockItems.slice(0, 5).forEach(([name, stats]) => {
+      yPos += 5;
+      const currentStock = stats.in - stats.out;
+      pdf.text(`- ${name}: ${currentStock} units remaining`, 25, yPos);
+    });
+    yPos += 10;
+    pdf.text(`Consider restocking these items soon.`, 25, yPos);
+    yPos += 10;
+  }
+  
+  if (overStockedItems.length > 0) {
+    yPos += 5;
+    pdf.setFont(undefined, 'bold');
+    pdf.text("• Overstocked Items (High stock, low distribution):", 14, yPos);
+    pdf.setFont(undefined, 'normal');
+    overStockedItems.slice(0, 5).forEach(([name, stats]) => {
+      yPos += 5;
+      const currentStock = stats.in - stats.out;
+      const distributionRate = ((stats.out / stats.in) * 100).toFixed(1);
+      pdf.text(`- ${name}: ${currentStock} units (${distributionRate}% distributed)`, 25, yPos);
+    });
+    yPos += 10;
+    pdf.text(`Consider promoting distribution or reducing procurement.`, 25, yPos);
+    yPos += 10;
+  }
+  
+  yPos += 10;
+  const avgDistribution = Object.values(supplyStats).reduce((sum, s) => {
+    return sum + (s.in > 0 ? (s.out / s.in) : 0);
+  }, 0) / Object.keys(supplyStats).length;
+  
+  pdf.setFont(undefined, 'bold');
+  pdf.text("• Overall Distribution Efficiency:", 14, yPos);
+  pdf.setFont(undefined, 'normal');
+  pdf.text(`Average: ${(avgDistribution * 100).toFixed(1)}%`, 25, yPos + 5);
+  
+  if (avgDistribution < 0.4) {
+    pdf.text(`Low distribution rate. Review distribution channels and demand.`, 25, yPos + 10);
+  } else if (avgDistribution > 0.8) {
+    pdf.text(`High distribution rate. Ensure adequate stock replenishment.`, 25, yPos + 10);
+  } else {
+    pdf.text(`Distribution efficiency is within healthy range (40-80%).`, 25, yPos + 10);
   }
 
-  if (type === "daily") addTables("Daily Breakdown", grouped.daily);
-  if (type === "weekly") addTables("Weekly Breakdown", grouped.weekly);
-  if (type === "monthly") addTables("Monthly Breakdown", grouped.monthly);
-
-  pdf.save(`supply-report-${type}.pdf`);
+  pdf.save(`seedling-supply-report-${type}-${new Date().toISOString().split('T')[0]}.pdf`);
 }
 </script>
 
