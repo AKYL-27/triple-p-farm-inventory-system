@@ -783,6 +783,72 @@ def update_equipment(equipment_id):
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+@app.route('/api/equipment/migrate-transactions', methods=['POST'])
+def migrate_equipment_transactions():
+    """One-time migration to create transaction history from existing borrow counts"""
+    try:
+        equipment_list = list(equipment_collection.find())
+        migrated_count = 0
+        
+        for equipment in equipment_list:
+            total_borrows = equipment.get("totalBorrowCount", 0)
+            
+            # If equipment has borrows but no transaction history
+            if total_borrows > 0:
+                # Check if we already have transactions for this equipment
+                existing = equipment_transactions_collection.find_one({
+                    "equipmentId": str(equipment["_id"]),
+                    "transactionType": "OUT"
+                })
+                
+                if not existing:
+                    # Create a transaction record for the total borrows
+                    last_used = equipment.get("lastUsed", equipment.get("dateAdded", datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                    
+                    transaction_record = {
+                        "equipmentId": str(equipment["_id"]),
+                        "equipmentName": equipment["name"],
+                        "transactionType": "OUT",
+                        "transactionAmount": total_borrows,
+                        "dateAdded": last_used,  # Use lastUsed date
+                        "previousQuantity": equipment["quantity"] + total_borrows,
+                        "newQuantity": equipment["quantity"]
+                    }
+                    equipment_transactions_collection.insert_one(transaction_record)
+                    migrated_count += 1
+            
+            # Also create an IN transaction for initial stock
+            initial_stock = equipment.get("quantity", 0) + equipment.get("totalBorrowCount", 0)
+            if initial_stock > 0:
+                date_added = equipment.get("dateAdded", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                
+                # Check if IN transaction exists
+                existing_in = equipment_transactions_collection.find_one({
+                    "equipmentId": str(equipment["_id"]),
+                    "transactionType": "IN"
+                })
+                
+                if not existing_in:
+                    transaction_record = {
+                        "equipmentId": str(equipment["_id"]),
+                        "equipmentName": equipment["name"],
+                        "transactionType": "IN",
+                        "transactionAmount": initial_stock,
+                        "dateAdded": date_added,
+                        "previousQuantity": 0,
+                        "newQuantity": initial_stock
+                    }
+                    equipment_transactions_collection.insert_one(transaction_record)
+                    migrated_count += 1
+        
+        return jsonify({
+            "message": f"Migration complete. Created {migrated_count} transaction records.",
+            "success": True
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"message": str(e), "success": False}), 500
+
 # get transaction history
 @app.route('/api/equipment/transactions', methods=['GET'])
 def get_equipment_transactions():
