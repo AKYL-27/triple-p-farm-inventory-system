@@ -35,6 +35,7 @@ FARMERS_COLLECTION = os.getenv("FARMERS_COLLECTION")
 BORROW_HISTORY_COLLECTION = os.getenv("BORROW_HISTORY_COLLECTION")
 USERS_COLLECTION = os.getenv("USERS_COLLECTION", "users")
 SUPPLY_TRANSACTIONS_COLLECTION = os.getenv("SUPPLY_TRANSACTIONS_COLLECTION")
+EQUIPMENT_TRANSACTIONS_COLLECTION = os.getenv("EQUIPMENT_TRANSACTIONS_COLLECTION")
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
@@ -44,6 +45,7 @@ farmers_collection = db[FARMERS_COLLECTION]
 borrow_history_collection = db[BORROW_HISTORY_COLLECTION]
 users_collection = db[USERS_COLLECTION]
 supply_transactions_collection = db[SUPPLY_TRANSACTIONS_COLLECTION]
+equipment_transactions_collection = db[EQUIPMENT_TRANSACTIONS_COLLECTION]
 
 print("Connected to DB:", DB_NAME)
 
@@ -741,6 +743,20 @@ def update_equipment(equipment_id):
         # If neither IN nor OUT provided, use the quantity from the form (manual edit)
         if not has_in and not has_out:
             new_quantity = int(data.get("quantity", current_equipment["quantity"]))
+
+        # Save transaction to history (NEW!)
+        if transaction_amount > 0:
+            transaction_record = {
+                "equipmentId": equipment_id,
+                "equipmentName": current_equipment["name"],
+                "transactionType": transaction_type,
+                "transactionAmount": transaction_amount,
+                "dateAdded": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "previousQuantity": current_equipment["quantity"],
+                "newQuantity": new_quantity
+            }
+            equipment_transactions_collection.insert_one(transaction_record)
+
         
         update_data = {
             "name": data.get("name", current_equipment["name"]),
@@ -766,6 +782,14 @@ def update_equipment(equipment_id):
         
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+# get transaction history
+@app.route('/api/equipment/transactions', methods=['GET'])
+def get_equipment_transactions():
+    transactions = list(equipment_transactions_collection.find())
+    for t in transactions:
+        t["_id"] = str(t["_id"])
+    return jsonify(transactions)
 
 # Get borrow history for a specific farmer
 @app.route('/api/borrow/history/farmer/<farmer_name>', methods=['GET'])
