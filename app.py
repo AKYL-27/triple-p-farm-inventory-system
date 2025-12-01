@@ -198,13 +198,13 @@ def register_farmer():
         "crop": crop,
         "birthday": birthday,   # optional
         "dateRegistered": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "status": "approved"    # default
+        "status": "pending"    # default
     }
 
     result = farmers_collection.insert_one(farmer)
 
     return jsonify({
-        "message": "Farmer registered",
+        "message": "Please wait for approval",
         "id": str(result.inserted_id)
     }), 201
 
