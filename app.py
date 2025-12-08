@@ -297,6 +297,65 @@ def reports():
 # API routes
 # ---------------------
 
+@app.route('/reset-password', methods=['POST'])
+def reset_farmer_password():
+    """
+    Reset password for a farmer based on phone number.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request, expected JSON"}), 400
+
+    phone = data.get("phone")
+    new_password = data.get("newPassword")
+
+    if not phone or not new_password:
+        return jsonify({"error": "Phone and newPassword are required"}), 400
+
+    # Find farmer
+    farmer = farmers_collection.find_one({"contact": phone})
+    if not farmer:
+        return jsonify({"error": "Farmer not found"}), 404
+
+    # Update password (hashed)
+    hashed_password = generate_password_hash(new_password)
+    farmers_collection.update_one(
+        {"_id": farmer["_id"]},
+        {"$set": {"password": hashed_password}}
+    )
+
+    return jsonify({"message": f"Password reset successful for {farmer['name']}"}), 200
+
+
+@app.route('/api/admin/reset-password', methods=['POST'])
+def reset_admin_password():
+    """
+    Reset password for an admin based on username.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid request, expected JSON"}), 400
+
+    username = data.get("username")
+    new_password = data.get("newPassword")
+
+    if not username or not new_password:
+        return jsonify({"error": "Username and newPassword are required"}), 400
+
+    # Find admin
+    user = users_collection.find_one({"username": username, "role": "admin"})
+    if not user:
+        return jsonify({"error": "Admin not found"}), 404
+
+    # Update password (hashed)
+    hashed_password = generate_password_hash(new_password)
+    users_collection.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password": hashed_password}}
+    )
+
+    return jsonify({"message": f"Password reset successful for admin {username}"}), 200
+    
 # Register farmer
 @app.route('/api/farmers', methods=['GET'])
 def get_farmers():
