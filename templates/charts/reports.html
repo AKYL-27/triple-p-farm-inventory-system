@@ -937,11 +937,23 @@ async function loadSuppliesChart() {
         },
 
         onHover: (event, active) => {
-          if (active.length > 0) {
-            const index = active[0].index;
-            showSupplyDetails(index);
-          }
-        },
+    if (!active || active.length === 0) return;
+
+    const index = active[0].index;
+    if (chartDetails[currentMode][index]) {
+        showSupplyDetails(index);
+    }
+},
+
+onClick: (event, active) => {
+    if (!active || active.length === 0) return;
+
+    const index = active[0].index;
+    if (chartDetails[currentMode][index]) {
+        showSupplyDetails(index);
+    }
+},
+
 
         scales: {
           y: { beginAtZero: true }
@@ -958,6 +970,8 @@ async function loadSuppliesChart() {
 function showSupplyDetails(index) {
   const mode = currentMode;
   const details = chartDetails[mode][index];
+if (!details) return;
+
   const label = chartDataSets[mode].labels[index];
 
   document.getElementById("detailTitle").innerText = `Details for: ${label}`;
