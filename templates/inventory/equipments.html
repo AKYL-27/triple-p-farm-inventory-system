@@ -806,8 +806,17 @@
     modal.show();
   }
 
-  // Load equipment when page loads
-  document.addEventListener("DOMContentLoaded", loadEquipment);
+document.addEventListener("DOMContentLoaded", function() {
+  loadEquipment();
+  
+  // Manual modal close handlers
+  const modalCloseButtons = document.querySelectorAll('[data-dismiss="modal"], [data-bs-dismiss="modal"]');
+  modalCloseButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      $('#addEquipmentModal').modal('hide');
+    });
+  });
+});
 </script>
 
         
