@@ -806,11 +806,12 @@ async function loadSuppliesChart() {
     const response = await fetch("/api/supplies");
     const supplies = await response.json();
 
+    // Ensure dateAdded is a Date object
     supplies.forEach(s => {
       s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
     });
 
-    /* ---------------- DAILY ---------------- */
+    /* ---------------- DAILY (last 7 days) ---------------- */
     for (let i = 6; i >= 0; i--) {
       const day = new Date();
       day.setDate(day.getDate() - i);
@@ -818,32 +819,33 @@ async function loadSuppliesChart() {
 
       const label = day.toLocaleDateString();
       let totalIn = 0, totalOut = 0;
-
       let details = { in: [], out: [] };
 
-      supplies.filter(s => isSameDay(s.dateAdded, day))
-      .forEach(s => {
-        const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      supplies.forEach(s => {
+        if (!isSameDay(s.dateAdded, day)) return;
 
-        if (s.transactionType === 'IN') {
+        const amount = parseInt(s.transactionAmount) || parseInt(s.quantity) || 0;
+        const name = s.supplyName || "Unknown Supply";
+
+        if (s.transactionType === "IN") {
           totalIn += amount;
-          details.in.push({ name: s.supplyName, amount });
-        } else if (s.transactionType === 'OUT') {
+          details.in.push({ name, amount });
+        } else if (s.transactionType === "OUT") {
           totalOut += amount;
-          details.out.push({ name: s.supplyName, amount });
+          details.out.push({ name, amount });
         }
       });
 
-      chartDetails.daily.push(details);
       chartDataSets.daily.labels.push(label);
       chartDataSets.daily.dataIn.push(totalIn);
       chartDataSets.daily.dataOut.push(totalOut);
+      chartDetails.daily.push(details);
     }
 
-    /* ---------------- WEEKLY ---------------- */
+    /* ---------------- WEEKLY (last 4 weeks) ---------------- */
     for (let i = 3; i >= 0; i--) {
       const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay() - (i * 7));
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() - i * 7);
       weekStart.setHours(0,0,0,0);
 
       const weekEnd = new Date(weekStart);
@@ -854,28 +856,29 @@ async function loadSuppliesChart() {
       let totalIn = 0, totalOut = 0;
       let details = { in: [], out: [] };
 
-      supplies.filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
-      .forEach(s => {
-        const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      supplies.forEach(s => {
+        if (s.dateAdded < weekStart || s.dateAdded > weekEnd) return;
 
-        if (s.transactionType === 'IN') {
+        const amount = parseInt(s.transactionAmount) || parseInt(s.quantity) || 0;
+        const name = s.supplyName || "Unknown Supply";
+
+        if (s.transactionType === "IN") {
           totalIn += amount;
-          details.in.push({ name: s.supplyName, amount });
-        } else if (s.transactionType === 'OUT') {
+          details.in.push({ name, amount });
+        } else if (s.transactionType === "OUT") {
           totalOut += amount;
-          details.out.push({ name: s.supplyName, amount });
+          details.out.push({ name, amount });
         }
       });
 
-      chartDetails.weekly.push(details);
       chartDataSets.weekly.labels.push(label);
       chartDataSets.weekly.dataIn.push(totalIn);
       chartDataSets.weekly.dataOut.push(totalOut);
+      chartDetails.weekly.push(details);
     }
 
-    /* ---------------- MONTHLY ---------------- */
+    /* ---------------- MONTHLY (last 12 months) ---------------- */
     const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
     for (let i = 11; i >= 0; i--) {
       const month = new Date();
       month.setMonth(month.getMonth() - i);
@@ -886,26 +889,25 @@ async function loadSuppliesChart() {
       let totalIn = 0, totalOut = 0;
       let details = { in: [], out: [] };
 
-      supplies.filter(s => 
-        s.dateAdded.getMonth() === month.getMonth() &&
-        s.dateAdded.getFullYear() === month.getFullYear()
-      )
-      .forEach(s => {
-        const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      supplies.forEach(s => {
+        if (s.dateAdded.getMonth() !== month.getMonth() || s.dateAdded.getFullYear() !== month.getFullYear()) return;
 
-        if (s.transactionType === 'IN') {
+        const amount = parseInt(s.transactionAmount) || parseInt(s.quantity) || 0;
+        const name = s.supplyName || "Unknown Supply";
+
+        if (s.transactionType === "IN") {
           totalIn += amount;
-          details.in.push({ name: s.supplyName, amount });
-        } else if (s.transactionType === 'OUT') {
+          details.in.push({ name, amount });
+        } else if (s.transactionType === "OUT") {
           totalOut += amount;
-          details.out.push({ name: s.supplyName, amount });
+          details.out.push({ name, amount });
         }
       });
 
-      chartDetails.monthly.push(details);
       chartDataSets.monthly.labels.push(label);
       chartDataSets.monthly.dataIn.push(totalIn);
       chartDataSets.monthly.dataOut.push(totalOut);
+      chartDetails.monthly.push(details);
     }
 
     /* ---------------- CREATE CHART ---------------- */
@@ -924,40 +926,18 @@ async function loadSuppliesChart() {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: "nearest", intersect: false },
-        
-        plugins: {
-          tooltip: { mode: "index", intersect: false }
-        },
-
+        plugins: { tooltip: { mode: "index", intersect: false } },
         onClick: (event, active) => {
-          if (active.length > 0) {
-            const index = active[0].index;
-            showSupplyDetails(index);
-          }
+          if (!active || active.length === 0) return;
+          const index = active[0].index;
+          if (chartDetails[currentMode][index]) showSupplyDetails(index);
         },
-
         onHover: (event, active) => {
-    if (!active || active.length === 0) return;
-
-    const index = active[0].index;
-    if (chartDetails[currentMode][index]) {
-        showSupplyDetails(index);
-    }
-},
-
-onClick: (event, active) => {
-    if (!active || active.length === 0) return;
-
-    const index = active[0].index;
-    if (chartDetails[currentMode][index]) {
-        showSupplyDetails(index);
-    }
-},
-
-
-        scales: {
-          y: { beginAtZero: true }
-        }
+          if (!active || active.length === 0) return;
+          const index = active[0].index;
+          if (chartDetails[currentMode][index]) showSupplyDetails(index);
+        },
+        scales: { y: { beginAtZero: true } }
       }
     });
 
@@ -966,44 +946,30 @@ onClick: (event, active) => {
   }
 }
 
-/* ---------------- DETAILS PANEL UNDER THE CHART ---------------- */
+/* ---------------- SHOW DETAILS PANEL ---------------- */
 function showSupplyDetails(index) {
   const mode = currentMode;
   const details = chartDetails[mode][index];
-if (!details) return;
+  if (!details) return;
 
   const label = chartDataSets[mode].labels[index];
-
   document.getElementById("detailTitle").innerText = `Details for: ${label}`;
 
   const inList = document.getElementById("detailINList");
   const outList = document.getElementById("detailOUTList");
 
-  inList.innerHTML = "";
-  outList.innerHTML = "";
+  inList.innerHTML = details.in.length
+    ? details.in.map(i => `<li>${i.name} — <strong>+${i.amount}</strong></li>`).join("")
+    : "<li class='text-muted'>No Supplies IN</li>";
 
-  // IN
-  if (details.in.length === 0) {
-    inList.innerHTML = "<li class='text-muted'>No Supplies IN</li>";
-  } else {
-    details.in.forEach(item => {
-      inList.innerHTML += `<li>${item.name} — <strong>+${item.amount}</strong></li>`;
-    });
-  }
-
-  // OUT
-  if (details.out.length === 0) {
-    outList.innerHTML = "<li class='text-muted'>No Supplies OUT</li>";
-  } else {
-    details.out.forEach(item => {
-      outList.innerHTML += `<li>${item.name} — <strong>-${item.amount}</strong></li>`;
-    });
-  }
+  outList.innerHTML = details.out.length
+    ? details.out.map(i => `<li>${i.name} — <strong>-${i.amount}</strong></li>`).join("")
+    : "<li class='text-muted'>No Supplies OUT</li>";
 
   document.getElementById("supplyDetailsPanel").style.display = "block";
 }
 
-/* ---------------- CHANGE VIEW ---------------- */
+/* ---------------- SWITCH DAILY/WEEKLY/MONTHLY ---------------- */
 function updateChartView(type) {
   if (!chartInstance) return;
   currentMode = type;
@@ -1013,11 +979,10 @@ function updateChartView(type) {
   chartInstance.data.datasets[1].data = chartDataSets[type].dataOut;
   chartInstance.update();
 
-  // Reset details panel
   document.getElementById("supplyDetailsPanel").style.display = "none";
 }
 
-/* ---------------- HELPERS ---------------- */
+/* ---------------- HELPER ---------------- */
 function isSameDay(d1, d2) {
   return d1.getFullYear() === d2.getFullYear() &&
          d1.getMonth() === d2.getMonth() &&
@@ -1026,6 +991,7 @@ function isSameDay(d1, d2) {
 
 document.addEventListener("DOMContentLoaded", loadSuppliesChart);
 </script>
+
 
 
 <script>
