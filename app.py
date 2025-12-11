@@ -693,17 +693,20 @@ def insert_equipment():
     data = request.get_json()
     equipment_name = data.get("name")
     quantity = int(data.get("quantity"))
+    unit = data.get("unit")  # <-- NEW FIELD
     date_added = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Insert equipment with usage stats
     equipment = {
         "name": equipment_name,
         "quantity": quantity,
+        "unit": unit,  # <-- ADD TO DOCUMENT
         "dateAdded": date_added,
         "transactionType": "IN",
         "lastUsed": None,
         "totalBorrowCount": 0
     }
+
     result = equipment_collection.insert_one(equipment)
     equipment_id = str(result.inserted_id)
 
@@ -729,7 +732,11 @@ def insert_equipment():
         {"$set": {"qrCode": qr_base64}}
     )
 
-    return jsonify({"message": "Equipment added", "id": equipment_id, "qrCode": qr_base64})
+    return jsonify({
+        "message": "Equipment added",
+        "id": equipment_id,
+        "qrCode": qr_base64
+    })
 
 @app.route('/api/equipment/<equipment_id>', methods=['GET'])
 def get_tool(equipment_id):
@@ -803,7 +810,7 @@ def update_equipment(equipment_id):
         if not has_in and not has_out:
             new_quantity = int(data.get("quantity", current_equipment["quantity"]))
 
-        # Save transaction to history (NEW!)
+        # Save transaction to history
         if transaction_amount > 0:
             transaction_record = {
                 "equipmentId": equipment_id,
@@ -816,12 +823,13 @@ def update_equipment(equipment_id):
             }
             equipment_transactions_collection.insert_one(transaction_record)
 
-        
+        # Prepare update data
         update_data = {
             "name": data.get("name", current_equipment["name"]),
             "quantity": new_quantity,
+            "unit": data.get("unit", current_equipment.get("unit")),  # <-- NEW
             "transactionType": transaction_type,
-            "transactionAmount": transaction_amount,  # ADD THIS LINE
+            "transactionAmount": transaction_amount,
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
@@ -841,6 +849,7 @@ def update_equipment(equipment_id):
         
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
 
 @app.route('/api/equipment/migrate-transactions', methods=['POST'])
 def migrate_equipment_transactions():
