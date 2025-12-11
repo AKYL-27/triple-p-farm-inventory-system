@@ -378,15 +378,7 @@
                         <!--<li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>-->
                       </ul>
 
-                          <div id="supplyDetailsPanel" class="border p-3 rounded mt-3" style="display:none;">
-  <h5 id="detailTitle"></h5>
-
-  <h6 class="text-success mt-2">Supplies IN</h6>
-  <ul id="detailINList"></ul>
-
-  <h6 class="text-danger mt-3">Supplies OUT</h6>
-  <ul id="detailOUTList"></ul>
-</div>
+                         
 
                     </div>
                     
@@ -400,7 +392,15 @@
                     <button class="btn btn-secondary" onclick="updateChartView('weekly')">Weekly</button>
                     <button class="btn btn-info" onclick="updateChartView('monthly')">Monthly</button>
                   </div>
-                  
+                   <div id="supplyDetailsPanel" class="border p-3 rounded mt-3" style="display:none;">
+  <h5 id="detailTitle"></h5>
+
+  <h6 class="text-success mt-2">Supplies IN</h6>
+  <ul id="detailINList"></ul>
+
+  <h6 class="text-danger mt-3">Supplies OUT</h6>
+  <ul id="detailOUTList"></ul>
+</div>
                   <div class="chart-container" style="position: relative; height: 350px;">
                         <!-- Buttons -->
                       <canvas id="lineChart"></canvas>
