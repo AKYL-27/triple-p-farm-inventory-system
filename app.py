@@ -1010,13 +1010,22 @@ def borrow_equipment(equipment_id):
     
 @app.route('/api/borrow-requests', methods=['GET'])
 def get_borrow_requests():
-    requests = list(borrow_history_collection.find({"status": "PENDING"}))
+    # Sort PENDING requests by dateBorrowed (newest first)
+    requests = list(
+        borrow_history_collection
+        .find({"status": "PENDING"})
+        .sort("dateBorrowed", -1)
+    )
+
     for r in requests:
-        r["_id"] = str(r["_id"])  # convert ObjectId
+        r["_id"] = str(r["_id"])
         r["borrowId"] = r["_id"]  # alias for frontend QR
+
         if isinstance(r.get("equipmentId"), ObjectId):
             r["equipmentId"] = str(r["equipmentId"])
+
     return jsonify(requests), 200
+
 
 
 
