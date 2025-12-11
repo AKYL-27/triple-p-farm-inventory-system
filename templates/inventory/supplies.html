@@ -460,7 +460,6 @@
 
           <div class="modal-footer border-0">
             <button type="submit" id="submitBtn" class="btn btn-primary">Add</button>
-            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
           </div>
         </form>
       </div>
@@ -769,8 +768,18 @@ document.getElementById("supplyForm").addEventListener("submit", async function 
   }
 });
 
-// Load supplies when page loads
-document.addEventListener("DOMContentLoaded", loadSupplies);
+  // Load equipment when page loads
+document.addEventListener("DOMContentLoaded", function() {
+  loadSupplies();
+  
+  // Manual modal close handlers
+  const modalCloseButtons = document.querySelectorAll('[data-dismiss="modal"], [data-bs-dismiss="modal"]');
+  modalCloseButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      $('#addEquipmentModal').modal('hide');
+    });
+  });
+});
 </script>
 <script>
 function showQrModal(name, qrUrl) {
