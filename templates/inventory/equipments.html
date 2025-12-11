@@ -613,6 +613,7 @@
           <tr>
             <td>${eq.name}</td>
             <td>${eq.quantity}</td>
+            <td>${eq.unit || '-'}</td>
             <td>
               ${eq.qrCode 
                 ? `<img src="data:image/png;base64, ${eq.qrCode}" 
@@ -627,7 +628,7 @@
             <td>
               <div class="form-button-action">
                 <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-                  onclick="startEditEquipment('${eq._id}', '${eq.name}', '${eq.quantity}')">
+                  onclick="startEditEquipment('${eq._id}', '${eq.name}', '${eq.quantity}', '${eq.unit || ''}')">
                   <i class="fa fa-edit"></i>
                 </button>
                 <button type="button" class="btn btn-link btn-danger" title="Remove"
