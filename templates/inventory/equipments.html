@@ -609,6 +609,10 @@
           status = diffDays <= 30 ? "Used" : "Unused";
         }
 
+        // Escape single quotes in data for onclick attributes
+        const escapedName = (eq.name || '').replace(/'/g, "\\'");
+        const escapedUnit = (eq.unit || '').replace(/'/g, "\\'");
+
         const row = `
           <tr>
             <td>${eq.name}</td>
@@ -619,7 +623,7 @@
                 ? `<img src="data:image/png;base64, ${eq.qrCode}" 
                          alt="QR Code" 
                          style="width:50px; height:50px; cursor:pointer;" 
-                         onclick="showQrModal('${eq.name}', '${eq.qrCode}')">`
+                         onclick="showQrModal('${escapedName}', '${eq.qrCode}')">`
                 : `<span class="text-muted">No QR</span>`}
             </td>
             <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
@@ -628,7 +632,7 @@
             <td>
               <div class="form-button-action">
                 <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-                  onclick="startEditEquipment('${eq._id}', '${eq.name}', '${eq.quantity}', '${eq.unit || ''}')">
+                  onclick="startEditEquipment('${eq._id}', '${escapedName}', '${eq.quantity}', '${escapedUnit}')">
                   <i class="fa fa-edit"></i>
                 </button>
                 <button type="button" class="btn btn-link btn-danger" title="Remove"
@@ -647,10 +651,11 @@
     }
   }
 
-  function startEditEquipment(id, name, quantity) {
+  function startEditEquipment(id, name, quantity, unit) {
     document.getElementById("equipmentId").value = id;
     document.getElementById("equipmentName").value = name;
     document.getElementById("equipmentQuantity").value = quantity;
+    document.getElementById("equipmentUnit").value = unit || "";
 
     // Show both IN and OUT quantity in edit mode
     document.getElementById("equipmentInWrapper").style.display = "block";
@@ -728,7 +733,8 @@
     const id = document.getElementById("equipmentId").value;
     const equipment = {
       name: document.getElementById("equipmentName").value,
-      quantity: document.getElementById("equipmentQuantity").value
+      quantity: document.getElementById("equipmentQuantity").value,
+      unit: document.getElementById("equipmentUnit").value
     };
 
     // Include IN and OUT quantity if editing
@@ -809,7 +815,6 @@
   // Load equipment when page loads
   document.addEventListener("DOMContentLoaded", loadEquipment);
 </script>
-
 
         <footer class="footer">
           <div class="container-fluid d-flex justify-content-between">
