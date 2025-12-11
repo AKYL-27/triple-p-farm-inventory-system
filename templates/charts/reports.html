@@ -776,10 +776,17 @@
 
 <script>
 let chartInstance;
+
 let chartDataSets = {
   daily: { labels: [], dataIn: [], dataOut: [] },
   weekly: { labels: [], dataIn: [], dataOut: [] },
   monthly: { labels: [], dataIn: [], dataOut: [] }
+};
+
+let chartDetails = {
+  daily: [],
+  weekly: [],
+  monthly: []
 };
 
 async function loadSuppliesChart() {
@@ -787,152 +794,148 @@ async function loadSuppliesChart() {
     const response = await fetch("/api/supplies");
     const supplies = await response.json();
 
-    console.log("Total supplies records:", supplies.length);
-    console.log("Sample records:", supplies.slice(0, 3));
-
-    // Process dates
     supplies.forEach(s => {
       s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
     });
 
-    // DAILY (last 7 days)
+    /* ---------------- DAILY ---------------- */
     for (let i = 6; i >= 0; i--) {
       const day = new Date();
       day.setDate(day.getDate() - i);
-      day.setHours(0, 0, 0, 0);
+      day.setHours(0,0,0,0);
+
       const label = day.toLocaleDateString();
-      
-      let totalIn = 0;
-      let totalOut = 0;
+      let totalIn = 0, totalOut = 0;
+
+      let details = { in: [], out: [] };
 
       supplies
         .filter(s => isSameDay(s.dateAdded, day))
         .forEach(s => {
           const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-          
+
           if (s.transactionType === 'IN') {
             totalIn += amount;
+            details.in.push({ name: s.supplyName, amount });
           } else if (s.transactionType === 'OUT') {
             totalOut += amount;
+            details.out.push({ name: s.supplyName, amount });
           }
         });
 
+      chartDetails.daily.push(details);
       chartDataSets.daily.labels.push(label);
       chartDataSets.daily.dataIn.push(totalIn);
       chartDataSets.daily.dataOut.push(totalOut);
-      
-      if (totalIn > 0 || totalOut > 0) {
-        console.log(`${label}: IN=${totalIn}, OUT=${totalOut}`);
-      }
     }
 
-    // WEEKLY (last 4 weeks) - FIXED
+    /* ---------------- WEEKLY ---------------- */
     for (let i = 3; i >= 0; i--) {
       const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - (weekStart.getDay()) - (i * 7));
-      weekStart.setHours(0, 0, 0, 0);
-      
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() - (i * 7));
+      weekStart.setHours(0,0,0,0);
+
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
+      weekEnd.setHours(23,59,59,999);
 
       const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
-      
-      let totalIn = 0;
-      let totalOut = 0;
+      let totalIn = 0, totalOut = 0;
+
+      let details = { in: [], out: [] };
 
       supplies
         .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
         .forEach(s => {
           const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-          
+
           if (s.transactionType === 'IN') {
             totalIn += amount;
+            details.in.push({ name: s.supplyName, amount });
           } else if (s.transactionType === 'OUT') {
             totalOut += amount;
+            details.out.push({ name: s.supplyName, amount });
           }
         });
 
+      chartDetails.weekly.push(details);
       chartDataSets.weekly.labels.push(label);
       chartDataSets.weekly.dataIn.push(totalIn);
       chartDataSets.weekly.dataOut.push(totalOut);
-      
-      console.log(`Week ${label}: IN=${totalIn}, OUT=${totalOut}`);
     }
 
-    // MONTHLY (last 12 months)
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    /* ---------------- MONTHLY ---------------- */
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
     for (let i = 11; i >= 0; i--) {
       const month = new Date();
       month.setMonth(month.getMonth() - i);
       month.setDate(1);
-      month.setHours(0, 0, 0, 0);
+      month.setHours(0,0,0,0);
 
       const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-      
-      let totalIn = 0;
-      let totalOut = 0;
+
+      let totalIn = 0, totalOut = 0;
+      let details = { in: [], out: [] };
 
       supplies
         .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
                      s.dateAdded.getFullYear() === month.getFullYear())
         .forEach(s => {
           const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-          
+
           if (s.transactionType === 'IN') {
             totalIn += amount;
+            details.in.push({ name: s.supplyName, amount });
           } else if (s.transactionType === 'OUT') {
             totalOut += amount;
+            details.out.push({ name: s.supplyName, amount });
           }
         });
 
+      chartDetails.monthly.push(details);
       chartDataSets.monthly.labels.push(label);
       chartDataSets.monthly.dataIn.push(totalIn);
       chartDataSets.monthly.dataOut.push(totalOut);
     }
 
-    // Initial chart (Daily as bar) with both IN and OUT
+    /* ---------------- CREATE CHART ---------------- */
     const ctx = document.getElementById("lineChart").getContext("2d");
     chartInstance = new Chart(ctx, {
       type: "bar",
       data: {
         labels: chartDataSets.daily.labels,
         datasets: [
-          {
-            label: "Supplies IN",
-            backgroundColor: "#1d7af3",
-            borderColor: "#1d7af3",
-            borderWidth: 1,
-            data: chartDataSets.daily.dataIn
-          },
-          {
-            label: "Supplies OUT",
-            backgroundColor: "#f3545d",
-            borderColor: "#f3545d",
-            borderWidth: 1,
-            data: chartDataSets.daily.dataOut
-          }
+          { label: "Supplies IN", backgroundColor: "#1d7af3", data: chartDataSets.daily.dataIn },
+          { label: "Supplies OUT", backgroundColor: "#f3545d", data: chartDataSets.daily.dataOut }
         ]
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
         plugins: {
-          legend: {
-            position: "bottom",
-            labels: { padding: 10 }
-          },
           tooltip: {
-            mode: "index",
-            intersect: false,
-            padding: 10
+            callbacks: {
+              afterBody: function(context) {
+                const index = context[0].dataIndex;
+                const mode = currentMode;
+                const details = chartDetails[mode][index];
+
+                let lines = [];
+
+                lines.push("---- IN DETAILS ----");
+                if (details.in.length === 0) lines.push("No IN supplies");
+                details.in.forEach(item => lines.push(`${item.name}: +${item.amount}`));
+
+                lines.push("---- OUT DETAILS ----");
+                if (details.out.length === 0) lines.push("No OUT supplies");
+                details.out.forEach(item => lines.push(`${item.name}: -${item.amount}`));
+
+                return lines;
+              }
+            }
           }
         },
-        layout: { padding: { left: 15, right: 15, top: 15, bottom: 15 } },
-        scales: {
-          y: { beginAtZero: true }
-        }
+        scales: { y: { beginAtZero: true } }
       }
     });
 
@@ -941,30 +944,22 @@ async function loadSuppliesChart() {
   }
 }
 
+let currentMode = "daily";
+
 function updateChartView(type) {
   if (!chartInstance) return;
+  currentMode = type;
+
   chartInstance.data.labels = chartDataSets[type].labels;
   chartInstance.data.datasets[0].data = chartDataSets[type].dataIn;
   chartInstance.data.datasets[1].data = chartDataSets[type].dataOut;
-  chartInstance.data.datasets[0].label = "Supplies IN";
-  chartInstance.data.datasets[1].label = "Supplies OUT";
   chartInstance.update();
 }
 
-// Helpers
 function isSameDay(d1, d2) {
   return d1.getFullYear() === d2.getFullYear() &&
          d1.getMonth() === d2.getMonth() &&
          d1.getDate() === d2.getDate();
-}
-
-function getStartOfWeek(date) {
-  const day = new Date(date);
-  const dayOfWeek = day.getDay();
-  const diff = day.getDate() - dayOfWeek;
-  day.setDate(diff);
-  day.setHours(0, 0, 0, 0);
-  return day;
 }
 
 document.addEventListener("DOMContentLoaded", loadSuppliesChart);
