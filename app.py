@@ -1105,7 +1105,10 @@ def return_equipment(history_id):
 # Get borrow history list
 @app.route('/api/borrow/history', methods=['GET'])
 def get_borrow_history():
-    history = list(borrow_history_collection.find())
+    # Sort by dateBorrowed descending (-1)
+    history = list(
+        borrow_history_collection.find().sort("dateBorrowed", -1)
+    )
 
     for h in history:
         h["_id"] = str(h["_id"])
@@ -1120,7 +1123,6 @@ def get_borrow_history():
             qr_img.save(buffer, format="PNG")
             qr_code_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-            # Save QR code back into DB
             borrow_history_collection.update_one(
                 {"_id": ObjectId(h["_id"])},
                 {"$set": {"qrCode": qr_code_base64}}
