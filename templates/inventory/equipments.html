@@ -806,30 +806,10 @@
     modal.show();
   }
 
-  // Reset modal when closed
-  $('#addEquipmentModal').on('hidden.bs.modal', function () {
-    document.getElementById("equipmentForm").reset();
-    document.getElementById("equipmentId").value = "";
-    
-    // Hide IN and OUT Quantity
-    document.getElementById("equipmentInWrapper").style.display = "none";
-    document.getElementById("equipmentOutWrapper").style.display = "none";
-    
-    // Make quantity field editable
-    document.getElementById("equipmentQuantity").readOnly = false;
-    if (document.getElementById("equipmentQuantityHint")) {
-      document.getElementById("equipmentQuantityHint").style.display = "none";
-    }
-    
-    // Reset modal title and button
-    document.getElementById("equipmentModalTitle").innerHTML = 
-      '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Tool/Equipment </span>';
-    document.getElementById("equipmentSubmitBtn").textContent = "Add";
-  });
-
   // Load equipment when page loads
   document.addEventListener("DOMContentLoaded", loadEquipment);
 </script>
+
         
         <footer class="footer">
           <div class="container-fluid d-flex justify-content-between">
