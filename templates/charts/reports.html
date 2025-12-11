@@ -362,35 +362,46 @@
               <div class="col-md-12">
                 <div class="card">
                   <div class="card-header d-flex justify-content-between align-items-center">
-  <div class="card-title">Supply Report</div>
-  <div class="card-tools">
-    <div class="dropdown">
-  <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-    <span class="btn-label">
-      <i class="fa fa-print"></i>
-    </span>
-    Print
-  </a>
-  <ul class="dropdown-menu">
-    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('daily')">Daily</a></li>
-    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('weekly')">Weekly</a></li>
-    <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('monthly')">Monthly</a></li>
-    <!--<li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>-->
-  </ul>
+                      <div class="card-title">Supply Report</div>
+                      <div class="card-tools">
+                        <div class="dropdown">
+                      <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <span class="btn-label">
+                          <i class="fa fa-print"></i>
+                        </span>
+                        Print
+                      </a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('daily')">Daily</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('weekly')">Weekly</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('monthly')">Monthly</a></li>
+                        <!--<li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>-->
+                      </ul>
+
+                          <div id="supplyDetailsPanel" class="border p-3 rounded mt-3" style="display:none;">
+  <h5 id="detailTitle"></h5>
+
+  <h6 class="text-success mt-2">Supplies IN</h6>
+  <ul id="detailINList"></ul>
+
+  <h6 class="text-danger mt-3">Supplies OUT</h6>
+  <ul id="detailOUTList"></ul>
 </div>
 
-
-  </div>
-</div>
+                    </div>
+                    
+                    
+                      </div>
+                    </div>
 
                   <div class="card-body">
                     <div class="mb-3">
-  <button class="btn btn-primary" onclick="updateChartView('daily')">Daily</button>
-  <button class="btn btn-secondary" onclick="updateChartView('weekly')">Weekly</button>
-  <button class="btn btn-info" onclick="updateChartView('monthly')">Monthly</button>
-</div>
-
-<div class="chart-container" style="position: relative; height: 350px;">
+                    <button class="btn btn-primary" onclick="updateChartView('daily')">Daily</button>
+                    <button class="btn btn-secondary" onclick="updateChartView('weekly')">Weekly</button>
+                    <button class="btn btn-info" onclick="updateChartView('monthly')">Monthly</button>
+                  </div>
+                  
+                  <div class="chart-container" style="position: relative; height: 350px;">
                         <!-- Buttons -->
                       <canvas id="lineChart"></canvas>
                     </div>
@@ -776,6 +787,7 @@
 
 <script>
 let chartInstance;
+let currentMode = "daily";
 
 let chartDataSets = {
   daily: { labels: [], dataIn: [], dataOut: [] },
@@ -809,19 +821,18 @@ async function loadSuppliesChart() {
 
       let details = { in: [], out: [] };
 
-      supplies
-        .filter(s => isSameDay(s.dateAdded, day))
-        .forEach(s => {
-          const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      supplies.filter(s => isSameDay(s.dateAdded, day))
+      .forEach(s => {
+        const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
 
-          if (s.transactionType === 'IN') {
-            totalIn += amount;
-            details.in.push({ name: s.supplyName, amount });
-          } else if (s.transactionType === 'OUT') {
-            totalOut += amount;
-            details.out.push({ name: s.supplyName, amount });
-          }
-        });
+        if (s.transactionType === 'IN') {
+          totalIn += amount;
+          details.in.push({ name: s.supplyName, amount });
+        } else if (s.transactionType === 'OUT') {
+          totalOut += amount;
+          details.out.push({ name: s.supplyName, amount });
+        }
+      });
 
       chartDetails.daily.push(details);
       chartDataSets.daily.labels.push(label);
@@ -841,22 +852,20 @@ async function loadSuppliesChart() {
 
       const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
       let totalIn = 0, totalOut = 0;
-
       let details = { in: [], out: [] };
 
-      supplies
-        .filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
-        .forEach(s => {
-          const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      supplies.filter(s => s.dateAdded >= weekStart && s.dateAdded <= weekEnd)
+      .forEach(s => {
+        const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
 
-          if (s.transactionType === 'IN') {
-            totalIn += amount;
-            details.in.push({ name: s.supplyName, amount });
-          } else if (s.transactionType === 'OUT') {
-            totalOut += amount;
-            details.out.push({ name: s.supplyName, amount });
-          }
-        });
+        if (s.transactionType === 'IN') {
+          totalIn += amount;
+          details.in.push({ name: s.supplyName, amount });
+        } else if (s.transactionType === 'OUT') {
+          totalOut += amount;
+          details.out.push({ name: s.supplyName, amount });
+        }
+      });
 
       chartDetails.weekly.push(details);
       chartDataSets.weekly.labels.push(label);
@@ -874,24 +883,24 @@ async function loadSuppliesChart() {
       month.setHours(0,0,0,0);
 
       const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-
       let totalIn = 0, totalOut = 0;
       let details = { in: [], out: [] };
 
-      supplies
-        .filter(s => s.dateAdded.getMonth() === month.getMonth() &&
-                     s.dateAdded.getFullYear() === month.getFullYear())
-        .forEach(s => {
-          const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
+      supplies.filter(s => 
+        s.dateAdded.getMonth() === month.getMonth() &&
+        s.dateAdded.getFullYear() === month.getFullYear()
+      )
+      .forEach(s => {
+        const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
 
-          if (s.transactionType === 'IN') {
-            totalIn += amount;
-            details.in.push({ name: s.supplyName, amount });
-          } else if (s.transactionType === 'OUT') {
-            totalOut += amount;
-            details.out.push({ name: s.supplyName, amount });
-          }
-        });
+        if (s.transactionType === 'IN') {
+          totalIn += amount;
+          details.in.push({ name: s.supplyName, amount });
+        } else if (s.transactionType === 'OUT') {
+          totalOut += amount;
+          details.out.push({ name: s.supplyName, amount });
+        }
+      });
 
       chartDetails.monthly.push(details);
       chartDataSets.monthly.labels.push(label);
@@ -901,6 +910,7 @@ async function loadSuppliesChart() {
 
     /* ---------------- CREATE CHART ---------------- */
     const ctx = document.getElementById("lineChart").getContext("2d");
+
     chartInstance = new Chart(ctx, {
       type: "bar",
       data: {
@@ -912,30 +922,30 @@ async function loadSuppliesChart() {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "nearest", intersect: false },
+        
         plugins: {
-          tooltip: {
-            callbacks: {
-              afterBody: function(context) {
-                const index = context[0].dataIndex;
-                const mode = currentMode;
-                const details = chartDetails[mode][index];
+          tooltip: { mode: "index", intersect: false }
+        },
 
-                let lines = [];
-
-                lines.push("---- IN DETAILS ----");
-                if (details.in.length === 0) lines.push("No IN supplies");
-                details.in.forEach(item => lines.push(`${item.name}: +${item.amount}`));
-
-                lines.push("---- OUT DETAILS ----");
-                if (details.out.length === 0) lines.push("No OUT supplies");
-                details.out.forEach(item => lines.push(`${item.name}: -${item.amount}`));
-
-                return lines;
-              }
-            }
+        onClick: (event, active) => {
+          if (active.length > 0) {
+            const index = active[0].index;
+            showSupplyDetails(index);
           }
         },
-        scales: { y: { beginAtZero: true } }
+
+        onHover: (event, active) => {
+          if (active.length > 0) {
+            const index = active[0].index;
+            showSupplyDetails(index);
+          }
+        },
+
+        scales: {
+          y: { beginAtZero: true }
+        }
       }
     });
 
@@ -944,8 +954,42 @@ async function loadSuppliesChart() {
   }
 }
 
-let currentMode = "daily";
+/* ---------------- DETAILS PANEL UNDER THE CHART ---------------- */
+function showSupplyDetails(index) {
+  const mode = currentMode;
+  const details = chartDetails[mode][index];
+  const label = chartDataSets[mode].labels[index];
 
+  document.getElementById("detailTitle").innerText = `Details for: ${label}`;
+
+  const inList = document.getElementById("detailINList");
+  const outList = document.getElementById("detailOUTList");
+
+  inList.innerHTML = "";
+  outList.innerHTML = "";
+
+  // IN
+  if (details.in.length === 0) {
+    inList.innerHTML = "<li class='text-muted'>No Supplies IN</li>";
+  } else {
+    details.in.forEach(item => {
+      inList.innerHTML += `<li>${item.name} — <strong>+${item.amount}</strong></li>`;
+    });
+  }
+
+  // OUT
+  if (details.out.length === 0) {
+    outList.innerHTML = "<li class='text-muted'>No Supplies OUT</li>";
+  } else {
+    details.out.forEach(item => {
+      outList.innerHTML += `<li>${item.name} — <strong>-${item.amount}</strong></li>`;
+    });
+  }
+
+  document.getElementById("supplyDetailsPanel").style.display = "block";
+}
+
+/* ---------------- CHANGE VIEW ---------------- */
 function updateChartView(type) {
   if (!chartInstance) return;
   currentMode = type;
@@ -954,8 +998,12 @@ function updateChartView(type) {
   chartInstance.data.datasets[0].data = chartDataSets[type].dataIn;
   chartInstance.data.datasets[1].data = chartDataSets[type].dataOut;
   chartInstance.update();
+
+  // Reset details panel
+  document.getElementById("supplyDetailsPanel").style.display = "none";
 }
 
+/* ---------------- HELPERS ---------------- */
 function isSameDay(d1, d2) {
   return d1.getFullYear() === d2.getFullYear() &&
          d1.getMonth() === d2.getMonth() &&
@@ -964,6 +1012,7 @@ function isSameDay(d1, d2) {
 
 document.addEventListener("DOMContentLoaded", loadSuppliesChart);
 </script>
+
 
 <script>
 async function generateSupplyReportPDF(type) {
