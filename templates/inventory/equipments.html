@@ -587,112 +587,117 @@
   });
 </script>
 
-<script>
-  let editingEquipmentId = null; // Tracks if we're editing
+let editingEquipmentId = null; // Tracks if we're editing
 
-  // Load and display equipment
-  async function loadEquipment() {
-    try {
-      const response = await fetch("/api/equipment");
-      const equipmentList = await response.json();
+// Load and display equipment
+async function loadEquipment() {
+  try {
+    const response = await fetch("/api/equipment");
+    const equipmentList = await response.json();
 
-      const tableBody = document.getElementById("equipmentTableBody");
-      tableBody.innerHTML = "";
+    const tableBody = document.getElementById("equipmentTableBody");
+    tableBody.innerHTML = "";
 
-      equipmentList.forEach(eq => {
-        // Determine status
-        let status = "Unused";
-        if (eq.lastUsed) {
-          const lastUsedDate = new Date(eq.lastUsed);
-          const today = new Date();
-          // Example: mark as Used if last used within the last 30 days
-          const diffDays = (today - lastUsedDate) / (1000 * 60 * 60 * 24);
-          status = diffDays <= 30 ? "Used" : "Unused";
-        }
+    equipmentList.forEach(eq => {
+      // Determine status
+      let status = "Unused";
+      if (eq.lastUsed) {
+        const lastUsedDate = new Date(eq.lastUsed);
+        const today = new Date();
+        const diffDays = (today - lastUsedDate) / (1000 * 60 * 60 * 24);
+        status = diffDays <= 30 ? "Used" : "Unused";
+      }
 
-        const row = `
-          <tr>
-            <td>${eq.name}</td>
-            <td>${eq.quantity}</td>
-            <td>${eq.quantity} ${eq.unit || ''}</td>
-            <td>
-              ${eq.qrCode 
-                ? `<img src="data:image/png;base64, ${eq.qrCode}" 
-                         alt="QR Code" 
-                         style="width:50px; height:50px; cursor:pointer;" 
-                         onclick="showQrModal('${eq.name}', '${eq.qrCode}')">`
-                : `<span class="text-muted">No QR</span>`}
-            </td>
-            <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
-            <td>${eq.totalBorrowCount || 0}</td>
-            <td>${status}</td>
-            <td>
-              <div class="form-button-action">
-                <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-                  onclick="startEditEquipment('${eq._id}', '${eq.name}', '${eq.quantity}')">
-                  <i class="fa fa-edit"></i>
-                </button>
-                <button type="button" class="btn btn-link btn-danger" title="Remove"
-                  onclick="deleteEquipment('${eq._id}')">
-                  <i class="fa fa-times"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-        tableBody.innerHTML += row;
-      });
+      const row = `
+        <tr>
+          <td>${eq.name}</td>
+          <td>${eq.quantity}</td>
+          <td>${eq.unit || ''}</td> <!-- SHOW UNIT -->
+          <td>
+            ${eq.qrCode 
+              ? `<img src="data:image/png;base64, ${eq.qrCode}" 
+                       alt="QR Code" 
+                       style="width:50px; height:50px; cursor:pointer;" 
+                       onclick="showQrModal(${JSON.stringify(eq.name)}, ${JSON.stringify(eq.qrCode)})">`
+              : `<span class="text-muted">No QR</span>`}
+          </td>
+          <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
+          <td>${eq.totalBorrowCount || 0}</td>
+          <td>${status}</td>
+          <td>
+            <div class="form-button-action">
+              <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
+                onclick="startEditEquipment(
+                  '${eq._id}', 
+                  ${JSON.stringify(eq.name)}, 
+                  ${JSON.stringify(eq.quantity)}, 
+                  ${JSON.stringify(eq.unit || '')}
+                )">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button type="button" class="btn btn-link btn-danger" title="Remove"
+                onclick="deleteEquipment('${eq._id}')">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      tableBody.innerHTML += row;
+    });
 
-    } catch (err) {
-      console.error("Error loading equipment:", err);
-    }
+  } catch (err) {
+    console.error("Error loading equipment:", err);
+  }
+}
+
+function startEditEquipment(id, name, quantity, unit) {
+  document.getElementById("equipmentId").value = id;
+  document.getElementById("equipmentName").value = name;
+  document.getElementById("equipmentQuantity").value = quantity;
+  document.getElementById("equipmentUnit").value = unit || ""; // <-- SET UNIT
+
+  // Show both IN and OUT quantity in edit mode
+  document.getElementById("equipmentInWrapper").style.display = "block";
+  document.getElementById("equipmentOutWrapper").style.display = "block";
+  document.getElementById("equipmentInQuantity").value = "";
+  document.getElementById("equipmentOutQuantity").value = "";
+
+  // Make quantity field read-only during edit
+  document.getElementById("equipmentQuantity").readOnly = true;
+  if (document.getElementById("equipmentQuantityHint")) {
+    document.getElementById("equipmentQuantityHint").style.display = "block";
   }
 
-  function startEditEquipment(id, name, quantity) {
-    document.getElementById("equipmentId").value = id;
-    document.getElementById("equipmentName").value = name;
-    document.getElementById("equipmentQuantity").value = quantity;
-    document.getElementById("equipmentUnit").value = unit || "";
+  document.getElementById("equipmentModalTitle").innerHTML =
+    '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Tool/Equipment </span>';
+  document.getElementById("equipmentSubmitBtn").textContent = "Update";
 
-    // Show both IN and OUT quantity in edit mode
-    document.getElementById("equipmentInWrapper").style.display = "block";
-    document.getElementById("equipmentOutWrapper").style.display = "block";
-    document.getElementById("equipmentInQuantity").value = "";
-    document.getElementById("equipmentOutQuantity").value = "";
+  $('#addEquipmentModal').modal('show');
+}
 
-    // Make quantity field read-only during edit
-    document.getElementById("equipmentQuantity").readOnly = true;
-    if (document.getElementById("equipmentQuantityHint")) {
-      document.getElementById("equipmentQuantityHint").style.display = "block";
-    }
-
-    document.getElementById("equipmentModalTitle").innerHTML =
-      '<span class="fw-mediumbold"> Edit</span> <span class="fw-light"> Tool/Equipment </span>';
-    document.getElementById("equipmentSubmitBtn").textContent = "Update";
-
-    $('#addEquipmentModal').modal('show');
-  }
-
-  function openAddEquipmentModal() {
-    document.getElementById("equipmentForm").reset();
-    document.getElementById("equipmentId").value = "";
+function openAddEquipmentModal() {
+  document.getElementById("equipmentForm").reset();
+  document.getElementById("equipmentId").value = "";
+  document.getElementById("equipmentUnit").value = ""; // <-- RESET UNIT
     
-    // Hide IN and OUT Quantity in add mode
-    document.getElementById("equipmentInWrapper").style.display = "none";
-    document.getElementById("equipmentOutWrapper").style.display = "none";
+  // Hide IN and OUT Quantity in add mode
+  document.getElementById("equipmentInWrapper").style.display = "none";
+  document.getElementById("equipmentOutWrapper").style.display = "none";
 
-    // Make quantity field editable for new equipment
-    document.getElementById("equipmentQuantity").readOnly = false;
-    if (document.getElementById("equipmentQuantityHint")) {
-      document.getElementById("equipmentQuantityHint").style.display = "none";
-    }
-
-    document.getElementById("equipmentModalTitle").innerHTML = 
-      '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Tool/Equipment </span>';
-    document.getElementById("equipmentSubmitBtn").textContent = "Add";
-
-    $('#addEquipmentModal').modal('show');
+  // Make quantity field editable for new equipment
+  document.getElementById("equipmentQuantity").readOnly = false;
+  if (document.getElementById("equipmentQuantityHint")) {
+    document.getElementById("equipmentQuantityHint").style.display = "none";
   }
+
+  document.getElementById("equipmentModalTitle").innerHTML = 
+    '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Tool/Equipment </span>';
+  document.getElementById("equipmentSubmitBtn").textContent = "Add";
+
+  $('#addEquipmentModal').modal('show');
+}
+
 
   // Delete equipment
   async function deleteEquipment(id) {
