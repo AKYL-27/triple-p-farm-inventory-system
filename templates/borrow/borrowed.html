@@ -720,7 +720,7 @@ history.forEach(h => {
   tableBody.appendChild(row);
 });
     // Initialize DataTable
-    const table = $('#basic-datatables').DataTable({ pageLength: 5 });
+    const table = $('#basic-datatables').DataTable({ pageLength: 5, order: [] });
 
     // Create filters (above table)
     $('#basic-datatables thead th').each(function(index) {
