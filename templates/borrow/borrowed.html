@@ -691,28 +691,34 @@ fetch('/api/borrow/history')
       return;
     }
 
-    // Populate table
-    history.forEach(h => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${h.equipmentName}</td>
-        <td>${h.quantity}</td>
-        <td>${h.borrowerName}</td>
-        <td>${h.dateBorrowed || ''}</td>
-        <td>${h.dateReturned || ''}</td>
-        <td>${h.status}</td>
-        <td>
-          ${h.qrCode 
-            ? `<img src="data:image/png;base64,${h.qrCode}" 
-                    alt="QR Code" 
-                    style="width:50px; height:50px; cursor:pointer;" 
-                    onclick="showQrModal('${h.equipmentName}', '${h.qrCode}', '${h.borrowerName}', '${h.quantity}', '${h.dateBorrowed}')">`
-            : `<span class="text-muted">No QR</span>`}
-        </td>
-      `;
-      tableBody.appendChild(row);
-    });
+    // Sort by dateBorrowed (latest first)
+history.sort((a, b) => {
+  const dateA = a.dateBorrowed ? new Date(a.dateBorrowed) : new Date(0);
+  const dateB = b.dateBorrowed ? new Date(b.dateBorrowed) : new Date(0);
+  return dateB - dateA; // Descending order (newest first)
+});
 
+// Populate table
+history.forEach(h => {
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${h.equipmentName}</td>
+    <td>${h.quantity}</td>
+    <td>${h.borrowerName}</td>
+    <td>${h.dateBorrowed || ''}</td>
+    <td>${h.dateReturned || ''}</td>
+    <td>${h.status}</td>
+    <td>
+      ${h.qrCode 
+        ? `<img src="data:image/png;base64,${h.qrCode}" 
+                alt="QR Code" 
+                style="width:50px; height:50px; cursor:pointer;" 
+                onclick="showQrModal('${h.equipmentName}', '${h.qrCode}', '${h.borrowerName}', '${h.quantity}', '${h.dateBorrowed}')">`
+        : `<span class="text-muted">No QR</span>`}
+    </td>
+  `;
+  tableBody.appendChild(row);
+});
     // Initialize DataTable
     const table = $('#basic-datatables').DataTable({ pageLength: 5 });
 
