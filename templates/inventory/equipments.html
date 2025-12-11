@@ -448,31 +448,52 @@
                                   </div>
                                 </div>
                     
-                                <div class="col-md-6 pe-0">
-                                  <div class="form-group form-group-default">
-                                    <label>Quantity</label>
-                                    <input
-                                      id="equipmentQuantity"
-                                      type="number"
-                                      min="0"
-                                      class="form-control"
-                                      placeholder="Enter quantity"
-                                    />
-                                  </div>
+                                <div class="col-md-6 pe-2">
+                                <div class="form-group form-group-default">
+                                  <label>Quantity</label>
+                                  <input
+                                    id="equipmentQuantity"
+                                    type="number"
+                                    min="0"
+                                    class="form-control"
+                                    placeholder="Enter quantity"
+                                  />
                                 </div>
-                    
-                                <!-- NEW: Unit Field -->
-                                <div class="col-md-6 ps-0">
-                                  <div class="form-group form-group-default">
-                                    <label>Unit</label>
-                                    <input
-                                      id="equipmentUnit"
-                                      type="text"
-                                      class="form-control"
-                                      placeholder="Enter unit (e.g., pcs, kg, liters)"
-                                    />
-                                  </div>
+                              </div>
+                              
+                              <!-- NEW: Unit Field -->
+                              <div class="col-md-6 ps-2">
+                                <div class="form-group form-group-default">
+                                  <label>Unit</label>
+                                  <input
+                                    id="equipmentUnit"
+                                    type="text"
+                                    class="form-control"
+                                    placeholder="Select or enter unit"
+                                    list="unitOptions"
+                                  />
+                                  <datalist id="unitOptions">
+                                    <option value="pcs">
+                                    <option value="units">
+                                    <option value="boxes">
+                                    <option value="sets">
+                                    <option value="kg">
+                                    <option value="grams">
+                                    <option value="liters">
+                                    <option value="ml">
+                                    <option value="meters">
+                                    <option value="cm">
+                                    <option value="pairs">
+                                    <option value="dozen">
+                                    <option value="rolls">
+                                    <option value="sheets">
+                                    <option value="bottles">
+                                    <option value="cans">
+                                    <option value="bags">
+                                    <option value="packs">
+                                  </datalist>
                                 </div>
+                              </div>
 
                               <!-- IN QUANTITY (Only for edit) -->
                               <div class="col-md-6" id="equipmentInWrapper" style="display:none;">
