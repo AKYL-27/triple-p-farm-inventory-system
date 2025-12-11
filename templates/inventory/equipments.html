@@ -411,84 +411,84 @@
                   <div class="card-body">
                     <!-- Modal -->
                    <div
-  class="modal fade"
-  id="addEquipmentModal"
-  tabindex="-1"
-  role="dialog"
-  aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header border-0">
-        <h5 class="modal-title" id="equipmentModalTitle">
-          <span class="fw-mediumbold"> New</span>
-          <span class="fw-light"> Tool/Equipment </span>
-        </h5>
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form id="equipmentForm">
-          <input type="hidden" id="equipmentId">
-          <div class="row">
-            <div class="col-sm-12">
-              <div class="form-group form-group-default">
-                <label>Equipment/Tool Name</label>
-                <input
-                  id="equipmentName"
-                  type="text"
-                  class="form-control"
-                  placeholder="Enter equipment name"
-                />
-              </div>
-            </div>
-
-            <div class="col-md-6 pe-0">
-              <div class="form-group form-group-default">
-                <label>Quantity</label>
-                <input
-                  id="equipmentQuantity"
-                  type="number"
-                  min="0"
-                  class="form-control"
-                  placeholder="Enter quantity"
-                />
-              </div>
-            </div>
-
-            <!-- NEW: Unit Field -->
-            <div class="col-md-6 ps-0">
-              <div class="form-group form-group-default">
-                <label>Unit</label>
-                <input
-                  id="equipmentUnit"
-                  type="text"
-                  class="form-control"
-                  placeholder="Enter unit (e.g., pcs, kg, liters)"
-                />
-              </div>
-            </div>
+                      class="modal fade"
+                      id="addEquipmentModal"
+                      tabindex="-1"
+                      role="dialog"
+                      aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header border-0">
+                            <h5 class="modal-title" id="equipmentModalTitle">
+                              <span class="fw-mediumbold"> New</span>
+                              <span class="fw-light"> Tool/Equipment </span>
+                            </h5>
+                            <button
+                              type="button"
+                              class="close"
+                              data-dismiss="modal"
+                              aria-label="Close"
+                            >
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <form id="equipmentForm">
+                              <input type="hidden" id="equipmentId">
+                              <div class="row">
+                                <div class="col-sm-12">
+                                  <div class="form-group form-group-default">
+                                    <label>Equipment/Tool Name</label>
+                                    <input
+                                      id="equipmentName"
+                                      type="text"
+                                      class="form-control"
+                                      placeholder="Enter equipment name"
+                                    />
+                                  </div>
+                                </div>
+                    
+                                <div class="col-md-6 pe-0">
+                                  <div class="form-group form-group-default">
+                                    <label>Quantity</label>
+                                    <input
+                                      id="equipmentQuantity"
+                                      type="number"
+                                      min="0"
+                                      class="form-control"
+                                      placeholder="Enter quantity"
+                                    />
+                                  </div>
+                                </div>
+                    
+                                <!-- NEW: Unit Field -->
+                                <div class="col-md-6 ps-0">
+                                  <div class="form-group form-group-default">
+                                    <label>Unit</label>
+                                    <input
+                                      id="equipmentUnit"
+                                      type="text"
+                                      class="form-control"
+                                      placeholder="Enter unit (e.g., pcs, kg, liters)"
+                                    />
+                                  </div>
+                                </div>
 
                               <!-- IN QUANTITY (Only for edit) -->
-<div class="col-md-6" id="equipmentInWrapper" style="display:none;">
-  <div class="form-group form-group-default">
-    <label>IN Quantity</label>
-    <input id="equipmentInQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to add" />
-  </div>
-</div>
-
-<!-- OUT QUANTITY (Only for edit) -->
-<div class="col-md-6" id="equipmentOutWrapper" style="display:none;">
-  <div class="form-group form-group-default">
-    <label>OUT Quantity</label>
-    <input id="equipmentOutQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to remove" />
-  </div>
-</div>
+                              <div class="col-md-6" id="equipmentInWrapper" style="display:none;">
+                                <div class="form-group form-group-default">
+                                  <label>IN Quantity</label>
+                                  <input id="equipmentInQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to add" />
+                                </div>
+                              </div>
+                              
+                              <!-- OUT QUANTITY (Only for edit) -->
+                              <div class="col-md-6" id="equipmentOutWrapper" style="display:none;">
+                                <div class="form-group form-group-default">
+                                  <label>OUT Quantity</label>
+                                  <input id="equipmentOutQuantity" type="number" min="0" class="form-control" placeholder="Enter quantity to remove" />
+                                </div>
+                              </div>
 
                           <!--   <div class="col-md-6">
                                 <div class="form-group form-group-default">
@@ -509,13 +509,7 @@
                               >
                                 Add
                               </button>
-                              <button
-                                type="button"
-                                class="btn btn-danger"
-                                data-dismiss="modal"
-                              >
-                                Close
-                              </button>
+                              
                             </div>
 
                           </form>
@@ -812,10 +806,31 @@
     modal.show();
   }
 
+  // Reset modal when closed
+  $('#addEquipmentModal').on('hidden.bs.modal', function () {
+    document.getElementById("equipmentForm").reset();
+    document.getElementById("equipmentId").value = "";
+    
+    // Hide IN and OUT Quantity
+    document.getElementById("equipmentInWrapper").style.display = "none";
+    document.getElementById("equipmentOutWrapper").style.display = "none";
+    
+    // Make quantity field editable
+    document.getElementById("equipmentQuantity").readOnly = false;
+    if (document.getElementById("equipmentQuantityHint")) {
+      document.getElementById("equipmentQuantityHint").style.display = "none";
+    }
+    
+    // Reset modal title and button
+    document.getElementById("equipmentModalTitle").innerHTML = 
+      '<span class="fw-mediumbold"> New</span> <span class="fw-light"> Tool/Equipment </span>';
+    document.getElementById("equipmentSubmitBtn").textContent = "Add";
+  });
+
   // Load equipment when page loads
   document.addEventListener("DOMContentLoaded", loadEquipment);
 </script>
-
+        
         <footer class="footer">
           <div class="container-fluid d-flex justify-content-between">
             <div>
