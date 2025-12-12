@@ -611,8 +611,10 @@ async function loadEquipment() {
     const response = await fetch("/api/equipment");
     const equipmentList = await response.json();
 
-    // Sort newest → oldest
-    equipmentList.sort((a, b) => parseInt(b._id.substring(0, 8), 16) - parseInt(a._id.substring(0, 8), 16));
+    // Sort newest → oldest based on MongoDB ObjectId timestamp
+    equipmentList.sort(
+      (a, b) => parseInt(b._id.substring(0, 8), 16) - parseInt(a._id.substring(0, 8), 16)
+    );
 
     const tableBody = document.getElementById("equipmentTableBody");
     tableBody.innerHTML = "";
@@ -632,9 +634,7 @@ async function loadEquipment() {
           <td>${eq.name}</td>
           <td>${eq.quantity}</td>
           <td>${eq.unit || '-'}</td>
-          <td>
-            ${eq.qrCode ? `<img src="data:image/png;base64, ${eq.qrCode}" style="width:50px;height:50px;cursor:pointer;" onclick="showQrModal('${escapedName}','${eq.qrCode}')">` : `<span class="text-muted">No QR</span>`}
-          </td>
+          <td>${eq.qrCode ? `<img src="data:image/png;base64, ${eq.qrCode}" style="width:50px;height:50px;cursor:pointer;" onclick="showQrModal('${escapedName}','${eq.qrCode}')">` : `<span class="text-muted">No QR</span>`}</td>
           <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
           <td>${eq.totalBorrowCount || 0}</td>
           <td>${status}</td>
@@ -655,31 +655,17 @@ async function loadEquipment() {
 
     // Destroy existing DataTable if exists
     if ($.fn.DataTable.isDataTable('#add-row')) {
-      equipmentTable.destroy();
-      $('#add-row').empty();
-      $('#add-row').append(`
-        <thead>
-          <tr>
-            <th>Equipment/Tool Name</th>
-            <th>Current Count</th>
-            <th>Unit</th>
-            <th>QR Code</th>
-            <th>Last Used</th>
-            <th>Use/Borrow Count</th>
-            <th>Status</th>
-            <th style="width:10%">Action</th>
-          </tr>
-        </thead>
-        <tbody id="equipmentTableBody">${tableBody.innerHTML}</tbody>
-      `);
+      $('#add-row').DataTable().destroy();
     }
 
-    // Initialize DataTable with multi-column filters (like your #multi-filter-select example)
+    // Initialize DataTable
     equipmentTable = $('#add-row').DataTable({
       pageLength: 5,
+      ordering: false, // Disable automatic sorting
       initComplete: function () {
         this.api().columns().every(function (index) {
           if (index === 3 || index === 7) return; // skip QR & Action
+
           const column = this;
           const select = $('<select class="form-select"><option value="">All</option></select>')
             .appendTo($(column.footer()).empty())
@@ -688,8 +674,13 @@ async function loadEquipment() {
               column.search(val ? '^' + val + '$' : '', true, false).draw();
             });
 
-          column.data().unique().sort().each(function (d) {
-            if (d) select.append('<option value="' + d + '">' + d + '</option>');
+          // Preserve table order for filter options
+          const seen = {};
+          column.data().each(function (d) {
+            if (d && !seen[d]) {
+              seen[d] = true;
+              select.append('<option value="' + d + '">' + d + '</option>');
+            }
           });
         });
       }
@@ -699,6 +690,7 @@ async function loadEquipment() {
     console.error("Error loading equipment:", err);
   }
 }
+
 
 
   function startEditEquipment(id, name, quantity, unit) {
