@@ -604,67 +604,102 @@
 <script>
   let editingEquipmentId = null; // Tracks if we're editing
 
-  // Load and display equipment
-  async function loadEquipment() {
-    try {
-      const response = await fetch("/api/equipment");
-      const equipmentList = await response.json();
+  let equipmentTable;
 
-      const tableBody = document.getElementById("equipmentTableBody");
-      tableBody.innerHTML = "";
+async function loadEquipment() {
+  try {
+    const response = await fetch("/api/equipment");
+    const equipmentList = await response.json();
 
-      equipmentList.forEach(eq => {
-        // Determine status
-        let status = "Unused";
-        if (eq.lastUsed) {
-          const lastUsedDate = new Date(eq.lastUsed);
-          const today = new Date();
-          // Example: mark as Used if last used within the last 30 days
-          const diffDays = (today - lastUsedDate) / (1000 * 60 * 60 * 24);
-          status = diffDays <= 30 ? "Used" : "Unused";
-        }
+    // Sort newest → oldest
+    equipmentList.sort((a, b) => parseInt(b._id.substring(0, 8), 16) - parseInt(a._id.substring(0, 8), 16));
 
-        // Escape single quotes in data for onclick attributes
-        const escapedName = (eq.name || '').replace(/'/g, "\\'");
-        const escapedUnit = (eq.unit || '').replace(/'/g, "\\'");
+    const tableBody = document.getElementById("equipmentTableBody");
+    tableBody.innerHTML = "";
 
-        const row = `
+    equipmentList.forEach(eq => {
+      let status = "Unused";
+      if (eq.lastUsed) {
+        const diffDays = (new Date() - new Date(eq.lastUsed)) / (1000*60*60*24);
+        status = diffDays <= 30 ? "Used" : "Unused";
+      }
+
+      const escapedName = (eq.name || '').replace(/'/g, "\\'");
+      const escapedUnit = (eq.unit || '').replace(/'/g, "\\'");
+
+      const row = `
+        <tr>
+          <td>${eq.name}</td>
+          <td>${eq.quantity}</td>
+          <td>${eq.unit || '-'}</td>
+          <td>
+            ${eq.qrCode ? `<img src="data:image/png;base64, ${eq.qrCode}" style="width:50px;height:50px;cursor:pointer;" onclick="showQrModal('${escapedName}','${eq.qrCode}')">` : `<span class="text-muted">No QR</span>`}
+          </td>
+          <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
+          <td>${eq.totalBorrowCount || 0}</td>
+          <td>${status}</td>
+          <td>
+            <div class="form-button-action">
+              <button type="button" class="btn btn-link btn-primary btn-lg" onclick="startEditEquipment('${eq._id}', '${escapedName}', '${eq.quantity}', '${escapedUnit}')">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button type="button" class="btn btn-link btn-danger" onclick="deleteEquipment('${eq._id}')">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      tableBody.innerHTML += row;
+    });
+
+    // Destroy existing DataTable if exists
+    if ($.fn.DataTable.isDataTable('#add-row')) {
+      equipmentTable.destroy();
+      $('#add-row').empty();
+      $('#add-row').append(`
+        <thead>
           <tr>
-            <td>${eq.name}</td>
-            <td>${eq.quantity}</td>
-            <td>${eq.unit || '-'}</td>
-            <td>
-              ${eq.qrCode 
-                ? `<img src="data:image/png;base64, ${eq.qrCode}" 
-                         alt="QR Code" 
-                         style="width:50px; height:50px; cursor:pointer;" 
-                         onclick="showQrModal('${escapedName}', '${eq.qrCode}')">`
-                : `<span class="text-muted">No QR</span>`}
-            </td>
-            <td>${eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : "-"}</td>
-            <td>${eq.totalBorrowCount || 0}</td>
-            <td>${status}</td>
-            <td>
-              <div class="form-button-action">
-                <button type="button" class="btn btn-link btn-primary btn-lg" title="Edit"
-                  onclick="startEditEquipment('${eq._id}', '${escapedName}', '${eq.quantity}', '${escapedUnit}')">
-                  <i class="fa fa-edit"></i>
-                </button>
-                <button type="button" class="btn btn-link btn-danger" title="Remove"
-                  onclick="deleteEquipment('${eq._id}')">
-                  <i class="fa fa-times"></i>
-                </button>
-              </div>
-            </td>
+            <th>Equipment/Tool Name</th>
+            <th>Current Count</th>
+            <th>Unit</th>
+            <th>QR Code</th>
+            <th>Last Used</th>
+            <th>Use/Borrow Count</th>
+            <th>Status</th>
+            <th style="width:10%">Action</th>
           </tr>
-        `;
-        tableBody.innerHTML += row;
-      });
-
-    } catch (err) {
-      console.error("Error loading equipment:", err);
+        </thead>
+        <tbody id="equipmentTableBody">${tableBody.innerHTML}</tbody>
+      `);
     }
+
+    // Initialize DataTable with multi-column filters (like your #multi-filter-select example)
+    equipmentTable = $('#add-row').DataTable({
+      pageLength: 5,
+      initComplete: function () {
+        this.api().columns().every(function (index) {
+          if (index === 3 || index === 7) return; // skip QR & Action
+          const column = this;
+          const select = $('<select class="form-select"><option value="">All</option></select>')
+            .appendTo($(column.footer()).empty())
+            .on('change', function () {
+              const val = $.fn.dataTable.util.escapeRegex($(this).val());
+              column.search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+
+          column.data().unique().sort().each(function (d) {
+            if (d) select.append('<option value="' + d + '">' + d + '</option>');
+          });
+        });
+      }
+    });
+
+  } catch (err) {
+    console.error("Error loading equipment:", err);
   }
+}
+
 
   function startEditEquipment(id, name, quantity, unit) {
     document.getElementById("equipmentId").value = id;
@@ -850,199 +885,6 @@ document.addEventListener("DOMContentLoaded", function() {
         </footer>
       </div>
 
-      <!-- Custom template | don't include it in your project! -->
-      <div class="custom-template">
-        <div class="title">Settings</div>
-        <div class="custom-content">
-          <div class="switcher">
-            <div class="switch-block">
-              <h4>Logo Header</h4>
-              <div class="btnSwitch">
-                <button
-                  type="button"
-                  class="selected changeLogoHeaderColor"
-                  data-color="dark"
-                ></button>
-                <button
-                  type="button"
-                  class="selected changeLogoHeaderColor"
-                  data-color="blue"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="purple"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="light-blue"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="green"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="orange"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="red"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="white"
-                ></button>
-                <br />
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="dark2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="blue2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="purple2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="light-blue2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="green2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="orange2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeLogoHeaderColor"
-                  data-color="red2"
-                ></button>
-              </div>
-            </div>
-            <div class="switch-block">
-              <h4>Navbar Header</h4>
-              <div class="btnSwitch">
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="dark"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="blue"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="purple"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="light-blue"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="green"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="orange"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="red"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="white"
-                ></button>
-                <br />
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="dark2"
-                ></button>
-                <button
-                  type="button"
-                  class="selected changeTopBarColor"
-                  data-color="blue2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="purple2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="light-blue2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="green2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="orange2"
-                ></button>
-                <button
-                  type="button"
-                  class="changeTopBarColor"
-                  data-color="red2"
-                ></button>
-              </div>
-            </div>
-            <div class="switch-block">
-              <h4>Sidebar</h4>
-              <div class="btnSwitch">
-                <button
-                  type="button"
-                  class="selected changeSideBarColor"
-                  data-color="white"
-                ></button>
-                <button
-                  type="button"
-                  class="changeSideBarColor"
-                  data-color="dark"
-                ></button>
-                <button
-                  type="button"
-                  class="changeSideBarColor"
-                  data-color="dark2"
-                ></button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="custom-toggle">
-          <i class="icon-settings"></i>
-        </div>
-      </div>
       <!-- End Custom template -->
     </div>
     <!--   Core JS Files   -->
@@ -1061,62 +903,6 @@ document.addEventListener("DOMContentLoaded", function() {
     <script src="{{ url_for('static', filename='assets/js/kaiadmin.min.js') }}"></script>
     <!-- Kaiadmin DEMO methods, don't include it in your project! -->
     <script src="{{ url_for('static', filename='assets/js/setting-demo2.js') }}"></script>
-    <script>
-      $(document).ready(function () {
-        $("#basic-datatables").DataTable({});
-
-        $("#multi-filter-select").DataTable({
-          pageLength: 5,
-          initComplete: function () {
-            this.api()
-              .columns()
-              .every(function () {
-                var column = this;
-                var select = $(
-                  '<select class="form-select"><option value=""></option></select>'
-                )
-                  .appendTo($(column.footer()).empty())
-                  .on("change", function () {
-                    var val = $.fn.dataTable.util.escapeRegex($(this).val());
-
-                    column
-                      .search(val ? "^" + val + "$" : "", true, false)
-                      .draw();
-                  });
-
-                column
-                  .data()
-                  .unique()
-                  .sort()
-                  .each(function (d, j) {
-                    select.append(
-                      '<option value="' + d + '">' + d + "</option>"
-                    );
-                  });
-              });
-          },
-        });
-
-        // Add Row
-        $("#add-row").DataTable({
-          pageLength: 5,
-        });
-
-        var action =
-          '<td> <div class="form-button-action"> <button type="button" data-bs-toggle="tooltip" title="" class="btn btn-link btn-primary btn-lg" data-original-title="Edit Task"> <i class="fa fa-edit"></i> </button> <button type="button" data-bs-toggle="tooltip" title="" class="btn btn-link btn-danger" data-original-title="Remove"> <i class="fa fa-times"></i> </button> </div> </td>';
-
-        $("#addRowButton").click(function () {
-          $("#add-row")
-            .dataTable()
-            .fnAddData([
-              $("#addName").val(),
-              $("#addPosition").val(),
-              $("#addOffice").val(),
-              action,
-            ]);
-          $("#addRowModal").modal("hide");
-        });
-      });
-    </script>
+    
   </body>
 </html>
