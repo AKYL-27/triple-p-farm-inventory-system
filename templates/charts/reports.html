@@ -61,6 +61,17 @@
       font-family: monospace;
       font-size: 14px;
   }
+
+  .expandable-section {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.expandable-section.show {
+  max-height: 2000px; /* big enough to fit your tables */
+}
+
 </style>
 
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -414,45 +425,93 @@
           <div class="page-inner">
             <h3 class="fw-bold mb-3">Reports</h3>
 
+            <!-- Supply Report Section -->
             <div class="row">
               <div class="col-md-12">
                 <div class="card">
                   <div class="card-header d-flex justify-content-between align-items-center">
-                      <div class="card-title">Supply Report</div>
-                      <div class="card-tools">
-                        <div class="dropdown">
-                      <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                        <span class="btn-label">
-                          <i class="fa fa-print"></i>
-                        </span>
-                        Print
-                      </a>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('daily')">Daily</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('weekly')">Weekly</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('monthly')">Monthly</a></li>
-                        <!--<li><a class="dropdown-item" href="#" onclick="generateSupplyReportPDF('overall')">Overall</a></li>-->
-                      </ul>
-                         
-                    </div>
-                    
+                    <div class="card-title">Supply Report</div>
+                    <div class="card-tools">
+                      <div class="dropdown">
+                        <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                          <span class="btn-label">
+                            <i class="fa fa-print"></i>
+                          </span>
+                          Print
+                        </a>
+                        <ul class="dropdown-menu">
+                          <li><a class="dropdown-item" href="#" onclick="generateSuppliesReportPDF('daily')">Daily</a></li>
+                          <li><a class="dropdown-item" href="#" onclick="generateSuppliesReportPDF('weekly')">Weekly</a></li>
+                          <li><a class="dropdown-item" href="#" onclick="generateSuppliesReportPDF('monthly')">Monthly</a></li>
+                        </ul>
+
                       </div>
                     </div>
+                  </div>
 
                   <div class="card-body">
                     <div class="mb-3">
-                    <button class="btn btn-primary" onclick="updateChartView('daily')">Daily</button>
-                    <button class="btn btn-secondary" onclick="updateChartView('weekly')">Weekly</button>
-                    <button class="btn btn-info" onclick="updateChartView('monthly')">Monthly</button>
-                  </div>
-                   
-              
+                      <button class="btn btn-primary" onclick="updateChartView('daily')">Daily</button>
+                      <button class="btn btn-secondary" onclick="updateChartView('weekly')">Weekly</button>
+                      <button class="btn btn-info" onclick="updateChartView('monthly')">Monthly</button>
+                    </div>
 
                     <div class="chart-container" style="position: relative; height: 350px;">
-                        <!-- Buttons -->
                       <canvas id="lineChart"></canvas>
+                    </div>
 
-                      
+                    <div class="text-center mt-3">
+                      <button id="btnToggleDetails" class="btn btn-outline-primary">More Details</button>
+                    </div>
+
+                    <!-- Expandable section -->
+                    <div id="supplyDetails" class="expandable-section mt-3">
+
+                      <!-- Supply Breakdown -->
+                      <h5 style="font-weight: bold;">Supply Breakdown</h5>
+                      <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                          <tr>
+                            <th>Supply Name</th>
+                            <th>Received (IN)</th>
+                            <th>Distributed (OUT)</th>
+                            <th>Current Stock</th>
+                            <th>Distribution Rate</th>
+                            <th>Last Transaction</th>
+                          </tr>
+                        </thead>
+                        <tbody></tbody>
+                      </table>
+
+                      <!-- Detailed Transaction Log -->
+                      <h5 class="mt-5" style="font-weight: bold;">Detailed Transaction Log</h5>
+                      <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                          <tr>
+                            <th>Date</th>
+                            <th>Supply Name</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Previous Qty</th>
+                            <th>New Qty</th>
+                          </tr>
+                        </thead>
+                        <tbody id="transactionLogBody"></tbody>
+                      </table>
+
+                      <h5 class="mt-5" style="font-weight: bold;">Executive Summary</h5>
+                      <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                          <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                          </tr>
+                        </thead>
+                        <tbody id="executiveSummaryBody"></tbody>
+                      </table>
+                      <!-- 🔥 INSIGHTS & RECOMMENDATIONS -->
+                      <h5 class="mt-5" style="font-weight: bold;">INSIGHTS & RECOMMENDATIONS</h5>
+                      <ul id="insightsList"></ul>
 
                     </div>
                   </div>
@@ -460,61 +519,155 @@
               </div>
             </div>
 
-<!-- Modal HTML -->
-<div id="supplyModal">
-  <div class="modal-content">
-    <span id="closeModal">&times;</span>
-    <h2 id="modalTitle"></h2>
-    <pre id="modalBody"></pre>
-  </div>
-</div>
-
-
-
-
-             <!-- Equipment Report Section -->
-<div class="row">
-  <div class="col-md-12">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title">Equipment Report</div>
-        <div class="card-tools">
-          <div class="dropdown">
-            <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-              <span class="btn-label">
-                <i class="fa fa-print"></i>
-              </span>
-              Print
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('daily')">Daily</a></li>
-              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('weekly')">Weekly</a></li>
-              <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('monthly')">Monthly</a></li>
-              <!--<li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('overall')">Overall</a></li>-->
-            </ul>
-          </div>
-        </div>
+ <!-- Modal for bar details -->
+<div class="modal fade" id="barDetailsModal" tabindex="-1" aria-labelledby="barDetailsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"> <!-- <-- Centered -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="barDetailsLabel" style="padding-left: .6rem">Supplies Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-
-      <div class="card-body">
-        <div class="mb-3">
-          <button class="btn btn-primary" onclick="updateEquipmentChartView('daily')">Daily</button>
-          <button class="btn btn-secondary" onclick="updateEquipmentChartView('weekly')">Weekly</button>
-          <button class="btn btn-info" onclick="updateEquipmentChartView('monthly')">Monthly</button>
-        </div>
-        <div class="chart-container" style="position: relative; height: 350px;">
-          <canvas id="equipmentChart"></canvas>
-        </div>
+      <div class="modal-body modal-supply-list" id="modalSupplyList">
+        <!-- Supplies list will appear here -->
       </div>
     </div>
   </div>
 </div>
+<style>
+  .modal-supply-list {
+    font-family: 'Verdana', sans-serif;
+    font-size: 1rem;     
+    line-height: 1.6;      
+    color: #292D58;
+    padding-left: 2rem;         
+  }
+  .modal-supply-list strong {
+    font-size: 1.1rem;
+  }
+</style>
 
+            <!-- Equipment Report Section -->
+            <div class="row mt-4">
+              <div class="col-md-12">
+                <div class="card">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-title">Equipment Report</div>
+                    <div class="card-tools">
+                      <div class="dropdown">
+                        <a href="#" class="btn btn-label-info btn-round btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                          <span class="btn-label">
+                            <i class="fa fa-print"></i>
+                          </span>
+                          Print
+                        </a>
+                        <ul class="dropdown-menu">
+                          <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('daily')">Daily</a></li>
+                          <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('weekly')">Weekly</a></li>
+                          <li><a class="dropdown-item" href="#" onclick="generateEquipmentReportPDF('monthly')">Monthly</a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
 
+                  <div class="card-body">
+                    <div class="mb-3">
+                      <button class="btn btn-primary" onclick="updateEquipmentChartView('daily')">Daily</button>
+                      <button class="btn btn-secondary" onclick="updateEquipmentChartView('weekly')">Weekly</button>
+                      <button class="btn btn-info" onclick="updateEquipmentChartView('monthly')">Monthly</button>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 350px;">
+                      <canvas id="equipmentChart"></canvas>
+                    </div>
+<div class="text-center mt-3">
+  <button id="btnToggleEquipmentDetails" class="btn btn-outline-primary">
+    More Details
+  </button>
+</div>
 
+<div id="equipmentDetails" class="expandable-section mt-3">
+
+  <h5 class="mt-5" style="font-weight: bold;">Equipment Breakdown</h5>
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Equipment Name</th>
+        <th>Stock-In</th>
+        <th>Borrowed</th>
+        <th>Returned</th>
+        <th>Unreturned</th>
+        <th>Available</th>
+        <th>Usage Rate</th>
+        <th>Last Used</th>
+      </tr>
+    </thead>
+    <tbody id="equipmentBreakdownBody"></tbody>
+  </table>
+
+  <h5 class="mt-5" style="font-weight: bold;">Detailed Unreturned Items Log</h5>
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Date Borrowed</th>
+        <th>Equipment</th>
+        <th>Quantity</th>
+        <th>Borrower</th>
+      </tr>
+    </thead>
+    <tbody id="equipmentUnreturnedBody"></tbody>
+  </table>
+
+  <h5 class="mt-5" style="font-weight: bold;">Detailed Returned Items Log</h5>
+  <table class="table table-striped table-bordered">
+  <thead class="table-dark">
+    <tr>
+      <th>Date Borrowed</th>
+      <th>Date Returned</th>
+      <th>Equipment</th>
+      <th>Quantity</th>
+      <th>Borrower</th>
+    </tr>
+  </thead>
+  <tbody id="equipmentReturnedBody"></tbody>
+</table>
+
+  <h5 class="mt-5" style="font-weight: bold;">Executive Summary</h5>
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Metric</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody id="equipmentExecutiveSummaryBody"></tbody>
+  </table>
+
+  <h5 class="mt-5" style="font-weight: bold;">INSIGHTS & RECOMMENDATIONS</h5>
+  <ul id="equipmentInsightsList"></ul>
+
+</div>
+
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
+
+<style>
+/* Smooth expandable section */
+.expandable-section {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.expandable-section.show {
+  max-height: 5000px; /* Adjust as needed for table height */
+}
+</style>
+
+
 
         <footer class="footer">
           <div class="container-fluid d-flex justify-content-between">
@@ -552,283 +705,426 @@
     <script src="{{ url_for('static', filename='assets/js/demo.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-   <!-- Modal JS (closing functionality) -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-      const modal = document.getElementById('supplyModal');
-      const closeBtn = document.getElementById('closeModal');
+  let chartInstance;
+  let allTransactions = [];
+  let currentView = 'daily';
+  let suppliesLoaded = false;
 
-      // Close when clicking X
-      closeBtn.addEventListener('click', () => {
-          modal.classList.remove('show');
-          setTimeout(() => { modal.style.display = 'none'; }, 300);
-      });
+  // Chart datasets with periods for filtering
+  let chartDataSets = {
+    daily: { labels: [], dataIn: [], dataOut: [], periods: [] },
+    weekly: { labels: [], dataIn: [], dataOut: [], periods: [] },
+    monthly: { labels: [], dataIn: [], dataOut: [], periods: [] }
+  };
 
-      // Close when clicking outside modal box
-      window.addEventListener('click', (e) => {
-          if (e.target === modal) {
-              modal.classList.remove('show');
-              setTimeout(() => { modal.style.display = 'none'; }, 300);
-          }
-      });
-  });
+  // --- Load Transactions and Prepare Chart ---
+  async function loadSuppliesChart() {
+    try {
+      const response = await fetch("/api/supplies/transactions");
+      const transactions = await response.json();
 
-  // Function to open modal with fade-in
-  function openModal() {
-      const modal = document.getElementById('supplyModal');
-      modal.style.display = 'flex';
-      setTimeout(() => { modal.classList.add('show'); }, 10);
-  }
-</script>
-<!--  for Supply Details -->
-<script>
-let chartInstance;
-let allSupplies = [];
-let currentView = 'daily';
-let chartDataSets = {
-  daily: { labels: [], dataIn: [], dataOut: [], periods: [] },
-  weekly: { labels: [], dataIn: [], dataOut: [], periods: [] },
-  monthly: { labels: [], dataIn: [], dataOut: [], periods: [] }
-};
-
-// --- Load supplies and prepare chart data ---
-async function loadSuppliesChart() {
-  try {
-    const response = await fetch("/api/supplies/transactions");
-    const supplies = await response.json();
-    allSupplies = supplies.map(s => ({ ...s, dateAdded: s.dateAdded ? new Date(s.dateAdded) : new Date() }));
-
-    const dates = allSupplies.map(s => s.dateAdded).filter(d => d && !isNaN(d));
-    const maxDate = dates.length ? new Date(Math.max(...dates)) : new Date();
-
-    // --- DAILY (last 7 days) ---
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(maxDate);
-      day.setDate(maxDate.getDate() - i);
-      day.setHours(0,0,0,0);
-      const label = day.toLocaleDateString();
-      const period = { start: new Date(day), end: new Date(day.getTime() + 24*60*60*1000 - 1) };
-      let totalIn=0, totalOut=0;
-
-      allSupplies.filter(s => isSameDay(s.dateAdded, day)).forEach(s => {
-        const amt = parseInt(s.transactionAmount)||1;
-        if((s.transactionType||'IN')==='IN') totalIn+=amt;
-        else totalOut+=amt;
-      });
-
-      chartDataSets.daily.labels.push(label);
-      chartDataSets.daily.dataIn.push(totalIn);
-      chartDataSets.daily.dataOut.push(totalOut);
-      chartDataSets.daily.periods.push(period);
-    }
-
-    // --- WEEKLY (last 4 weeks) ---
-    for(let i=3;i>=0;i--){
-      const weekEnd=new Date(maxDate);
-      weekEnd.setDate(maxDate.getDate()-maxDate.getDay()-i*7+6);
-      weekEnd.setHours(23,59,59,999);
-      const weekStart=new Date(weekEnd);
-      weekStart.setDate(weekEnd.getDate()-6);
-      weekStart.setHours(0,0,0,0);
-      const label=`${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
-      const period={start:weekStart,end:weekEnd};
-      let totalIn=0,totalOut=0;
-
-      allSupplies.filter(s=>s.dateAdded>=weekStart && s.dateAdded<=weekEnd).forEach(s=>{
-        const amt=parseInt(s.transactionAmount)||1;
-        if((s.transactionType||'IN')==='IN') totalIn+=amt;
-        else totalOut+=amt;
-      });
-
-      chartDataSets.weekly.labels.push(label);
-      chartDataSets.weekly.dataIn.push(totalIn);
-      chartDataSets.weekly.dataOut.push(totalOut);
-      chartDataSets.weekly.periods.push(period);
-    }
-
-    // --- MONTHLY (last 12 months) ---
-    const monthNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    for(let i=11;i>=0;i--){
-      const month=new Date(maxDate);
-      month.setMonth(maxDate.getMonth()-i);
-      month.setDate(1);
-      month.setHours(0,0,0,0);
-      const label=`${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-      const period={ start: month, end: new Date(month.getFullYear(),month.getMonth()+1,0,23,59,59,999)};
-      let totalIn=0,totalOut=0;
-
-      allSupplies.filter(s=>s.dateAdded.getMonth()===month.getMonth() && s.dateAdded.getFullYear()===month.getFullYear()).forEach(s=>{
-        const amt=parseInt(s.transactionAmount)||1;
-        if((s.transactionType||'IN')==='IN') totalIn+=amt;
-        else totalOut+=amt;
-      });
-
-      chartDataSets.monthly.labels.push(label);
-      chartDataSets.monthly.dataIn.push(totalIn);
-      chartDataSets.monthly.dataOut.push(totalOut);
-      chartDataSets.monthly.periods.push(period);
-    }
-
-    // --- Initialize Chart ---
-    const ctx = document.getElementById("lineChart").getContext("2d");
-    chartInstance = new Chart(ctx, {
-      type:"bar",
-      data:{
-        labels: chartDataSets.daily.labels,
-        datasets:[
-          { label:"Supplies IN", backgroundColor:"#1d7af3", borderColor:"#1d7af3", borderWidth:1, data:chartDataSets.daily.dataIn },
-          { label:"Supplies OUT", backgroundColor:"#f3545d", borderColor:"#f3545d", borderWidth:1, data:chartDataSets.daily.dataOut }
-        ]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        onClick: handleBarClick,
-    
-        
-        plugins: {
-  legend: { position: "bottom", labels: { padding: 10 } },
-  tooltip: {
-    mode: "nearest",
-    intersect: true,
-    callbacks: {
-      label: function (context) {
-        const datasetLabel = context.dataset.label || '';
-        const value = context.formattedValue;
-
-        // --- Build list of supplies for this bar ---
-        const periods = chartInstance.custom?.periods || [];
-        const period = periods[context.dataIndex];
-        const type = context.datasetIndex === 0 ? "IN" : "OUT";
-
-        const suppliesList = allSupplies.filter(s =>
-          s.dateAdded >= period.start &&
-          s.dateAdded <= period.end &&
-          s.transactionType === type
+      // Normalize dateAdded: ignore milliseconds and timezone
+      allTransactions = transactions.map(t => {
+        if (!t.dateAdded) return { ...t, dateAdded: new Date() };
+        let cleaned = t.dateAdded.toString().replace(/\.\d{3}.*$/, '').replace('T', ' ');
+        const parts = cleaned.split(/[- :]/);
+        const date = new Date(
+          parseInt(parts[0]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[2]),
+          parseInt(parts[3] || 0),
+          parseInt(parts[4] || 0),
+          parseInt(parts[5] || 0)
         );
+        return { ...t, dateAdded: date };
+      });
 
-        // --- Main label line ---
-        let lines = [`${datasetLabel}: ${value}`];
+      const dates = allTransactions.map(s => s.dateAdded).filter(d => !isNaN(d));
+      const maxDate = dates.length ? new Date(Math.max(...dates)) : new Date();
 
-        // --- Add supply names + quantity ---
-        if (suppliesList.length > 0) {
-          suppliesList.forEach(s => {
-            const qty = parseInt(s.transactionAmount) || 1;
-            const name = s.supplyName || "Unknown";
-            lines.push(`• ${name}: ${qty}`);
-          });
-        } else {
-          lines.push("(No individual items)");
-        }
+      // --- Generate chart datasets ---
+      generateChartData('daily', maxDate, 7);
+      generateChartData('weekly', maxDate, 4);
+      generateChartData('monthly', maxDate, 12);
 
-        return lines;
+      // --- Initialize Chart ---
+      const ctx = document.getElementById("lineChart").getContext("2d");
+chartInstance = new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: chartDataSets.daily.labels,
+    datasets: [
+      { 
+        label: "Supplies IN", 
+        backgroundColor: "#1d7af3", 
+        borderColor: "#1d7af3", 
+        borderWidth: 1, 
+        data: chartDataSets.daily.dataIn 
+      },
+      { 
+        label: "Supplies OUT", 
+        backgroundColor: "#f3545d", 
+        borderColor: "#f3545d", 
+        borderWidth: 1, 
+        data: chartDataSets.daily.dataOut 
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    onClick: (evt, elements) => {
+      if (elements.length > 0) {
+        const elementIndex = elements[0].index;
+        const datasetIndex = elements[0].datasetIndex; // 0 = IN, 1 = OUT
+        showBarDetails(elementIndex, datasetIndex);
       }
     }
   }
-},
+});
 
 
-        scales:{ y:{ beginAtZero:true } }
+      suppliesLoaded = true;
+    } catch (err) {
+      console.error("Error loading supplies chart:", err);
+    }
+  }
+
+  // --- Generate chart data helper ---
+  function generateChartData(type, maxDate, count) {
+    chartDataSets[type] = { labels: [], dataIn: [], dataOut: [], periods: [] };
+    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    for (let i = count - 1; i >= 0; i--) {
+      let start, end, label;
+      if (type === 'daily') {
+        start = new Date(maxDate); start.setDate(maxDate.getDate() - i); start.setHours(0,0,0,0);
+        end = new Date(start.getTime() + 24*60*60*1000 - 1);
+        label = start.toLocaleDateString();
+      } else if (type === 'weekly') {
+        const weekEnd = new Date(maxDate); weekEnd.setDate(maxDate.getDate() - maxDate.getDay() - i*7 + 6);
+        weekEnd.setHours(23,59,59,999);
+        const weekStart = new Date(weekEnd); weekStart.setDate(weekEnd.getDate() - 6); weekStart.setHours(0,0,0,0);
+        start = weekStart; end = weekEnd;
+        label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
+      } else { // monthly
+        const month = new Date(maxDate); month.setMonth(maxDate.getMonth() - i); month.setDate(1); month.setHours(0,0,0,0);
+        start = month;
+        end = new Date(month.getFullYear(), month.getMonth()+1, 0, 23,59,59,999);
+        label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
+      }
+
+      const filtered = allTransactions.filter(s => s.dateAdded >= start && s.dateAdded <= end);
+      let totalIn = 0, totalOut = 0;
+      filtered.forEach(s => {
+        const amt = parseInt(s.transactionAmount) || 0;
+        if ((s.transactionType || 'IN') === 'IN') totalIn += amt;
+        else totalOut += amt;
+      });
+
+      chartDataSets[type].labels.push(label);
+      chartDataSets[type].dataIn.push(totalIn);
+      chartDataSets[type].dataOut.push(totalOut);
+      chartDataSets[type].periods.push({ start, end });
+    }
+  }
+
+  // --- Populate "More Details" and Insights ---
+  async function populateSupplyDetails() {
+    if (!suppliesLoaded) {
+      await new Promise(r => setTimeout(r, 100));
+      return populateSupplyDetails();
+    }
+
+    const breakdownBody = document.querySelector("#supplyDetails table:nth-of-type(1) tbody");
+    const logBody = document.getElementById("transactionLogBody");
+    const insightsList = document.getElementById("insightsList");
+
+    breakdownBody.innerHTML = "";
+    logBody.innerHTML = "";
+    insightsList.innerHTML = "";
+
+    // --- Aggregate per product ---
+    const stats = {};
+    allTransactions.forEach(s => {
+      const name = s.supplyName || s.name || "Unknown";
+      const amount = parseInt(s.transactionAmount) || 0;
+
+      if (!stats[name]) stats[name] = { in: 0, out: 0, lastTransaction: null, currentStock: 0 };
+
+      if ((s.transactionType || 'IN') === 'IN') stats[name].in += amount;
+      else stats[name].out += amount;
+
+      stats[name].currentStock = s.newQuantity || (stats[name].in - stats[name].out);
+
+      if (!stats[name].lastTransaction || s.dateAdded > stats[name].lastTransaction)
+        stats[name].lastTransaction = s.dateAdded;
+    });
+
+    
+    // --- Supply Breakdown Table ---
+Object.entries(stats)
+  .sort((a, b) => {
+    const dateA = a[1].lastTransaction ? new Date(a[1].lastTransaction) : 0;
+    const dateB = b[1].lastTransaction ? new Date(b[1].lastTransaction) : 0;
+    return dateB - dateA; // newest first
+  })
+  .forEach(([name, s]) => {
+    const distributionRate = s.in > 0 ? ((s.out / s.in) * 100).toFixed(1) + '%' : '0%';
+    const lastActivity = s.lastTransaction ? s.lastTransaction.toLocaleDateString() : '-';
+    breakdownBody.innerHTML += `
+      <tr>
+        <td>${name}</td>
+        <td>${s.in}</td>
+        <td>${s.out}</td>
+        <td>${s.currentStock}</td>
+        <td>${distributionRate}</td>
+        <td>${lastActivity}</td>
+      </tr>
+    `;
+  });
+
+
+  // --- Detailed Transaction Log ---
+  allTransactions
+    .sort((a, b) => b.dateAdded - a.dateAdded) // newest first
+    .forEach(s => {
+      const initial = s.previousQuantity || 0;
+      const amount = parseInt(s.transactionAmount) || 0;
+      const current = s.newQuantity || initial;
+      logBody.innerHTML += `
+        <tr>
+          <td>${s.dateAdded.toLocaleDateString()}</td>
+          <td>${s.supplyName || s.name || 'Unknown'}</td>
+          <td>${s.transactionType}</td>
+          <td>${amount}</td>
+          <td>${initial}</td>
+          <td>${current}</td>
+        </tr>
+      `;
+    });
+
+      // ================================
+  // ✅ EXECUTIVE SUMMARY
+  // ================================
+  const summaryBody = document.getElementById("executiveSummaryBody");
+  summaryBody.innerHTML = ""; // Clear previous content
+
+  // Calculate key metrics
+  const totalIn = Object.values(stats).reduce((sum, s) => sum + (s.in || 0), 0);
+  const totalOut = Object.values(stats).reduce((sum, s) => sum + (s.out || 0), 0);
+  const netStock = totalIn - totalOut;
+  const distributionRate = totalIn > 0 ? (totalOut / totalIn) * 100 : 0;
+
+  // Append rows
+  summaryBody.innerHTML = `
+    <tr>
+      <td>Total Supplies Added (IN)</td>
+      <td>${totalIn}</td>
+    </tr>
+    <tr>
+      <td>Total Supplies Distributed (OUT)</td>
+      <td>${totalOut}</td>
+    </tr>
+    <tr>
+      <td>Net Available Stock</td>
+      <td>${netStock}</td>
+    </tr>
+    <tr>
+      <td>Distribution Rate</td>
+      <td>${distributionRate.toFixed(1)}%</td>
+    </tr>
+  `;
+
+    // ================================
+    // 🔥 INSIGHTS & RECOMMENDATIONS
+    // ================================
+
+  // Clear previous content
+  insightsList.innerHTML = "";
+
+  // Make sure insightsList has 'row' class
+  insightsList.className = "row";
+
+  const now = new Date();
+  const lowStockItems = [];
+  const overStockedItems = [];
+  let mostDistributed = null;
+  let leastDistributed = null;
+
+  const entries = Object.entries(stats).filter(([name,s]) => true);
+
+  // Threshold for ignoring very recent stock for least distributed/overstocked
+  const recentDaysThreshold = 7;
+
+  if(entries.length > 0){
+    mostDistributed = entries.sort((a,b) => b[1].out - a[1].out)[0];
+    leastDistributed = entries
+      .filter(([name,s]) => s.in > 0 && (now - s.lastTransaction)/(1000*60*60*24) > recentDaysThreshold)
+      .sort((a,b) => a[1].out - b[1].out)[0];
+
+    entries.forEach(([name,s]) => {
+      const current = s.currentStock;
+      if(current > 0 && current < 10) lowStockItems.push([name, current]);
+      const rate = s.in > 0 ? (s.out / s.in) : 0;
+      if(current > 50 && rate < 0.3 && (now - s.lastTransaction)/(1000*60*60*24) > recentDaysThreshold) {
+        overStockedItems.push([name, current, rate]);
       }
     });
 
-    // Attach periods for modal clicks
-    chartInstance.custom = { periods: chartDataSets.daily.periods };
+    const cardsData = [
+      ["Most Distributed Supply", mostDistributed ? `${mostDistributed[0]} (${mostDistributed[1].out} units distributed). High demand item – ensure adequate stock levels.` : "No items in this category."],
+      ["Least Distributed Supply", leastDistributed ? `${leastDistributed[0]} (${leastDistributed[1].out} units distributed). Low demand – review procurement.` : "No items are underutilized at the moment."],
+      ["Low Stock Items", lowStockItems.length ? lowStockItems.map(([name, qty]) => `${name}: ${qty} units remaining`).join("<br>") : "All supplies are sufficiently stocked."],
+      ["Overstocked Items", overStockedItems.length ? overStockedItems.map(([name, qty, rate]) => `${name}: ${qty} units (${(rate*100).toFixed(1)}% distributed)`).join("<br>") : "No supplies are currently overstocked."],
+      ["Overall Distribution Efficiency", (() => {
+        const avgDistribution = entries.reduce((sum,[name,s]) => sum + (s.in>0 ? s.out/s.in : 0),0)/entries.length;
+        let efficiencyText = "";
+        if(avgDistribution < 0.4) efficiencyText = "Low distribution rate. Review distribution channels and demand.";
+        else if(avgDistribution > 0.8) efficiencyText = "High distribution rate. Ensure adequate stock replenishment.";
+        else efficiencyText = "Distribution efficiency is within healthy range (40-80%).";
+        return `${(avgDistribution*100).toFixed(1)}% - ${efficiencyText}`;
+      })()]
+    ];
 
-  } catch(err){
-    console.error("Error loading supplies chart:",err);
+    const createCard = (title, content) => {
+    const isEmpty = content.startsWith("No") || content.startsWith("All") || content.startsWith("No items");
+    const div = document.createElement("div");
+    div.className = "col-md-6 mb-3";
+    div.innerHTML = `
+      <div class="card h-100 border-light shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title">${title}</h6>
+          <p class="card-text" style="${isEmpty ? ' color:#aaa; font-style:italic;' : ''}">${content}</p>
+        </div>
+      </div>
+    `;
+    return div;
+  };
+
+
+    // Append cards in 2x2 layout
+    for(let i=0; i<cardsData.length; i+=2){
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "row mb-3";
+      rowDiv.appendChild(createCard(...cardsData[i]));
+      if(cardsData[i+1]) rowDiv.appendChild(createCard(...cardsData[i+1]));
+      insightsList.appendChild(rowDiv);
+    }
+
+  } else {
+    insightsList.innerHTML = `<div class="col-12"><div class="alert alert-secondary">No critical insights for this period.</div></div>`;
   }
-}
-
-// --- Click Handler to show modal ---
-// --- Click Handler to show modal ---
-function handleBarClick(evt){
-    if(!chartInstance || !chartInstance.custom?.periods) return;
-
-    const points = chartInstance.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-    if(!points.length) return;
-
-    const firstPoint = points[0];
-    const datasetIndex = firstPoint.datasetIndex;
-    const index = firstPoint.index;
-
-    const period = chartInstance.custom.periods[index];
-    if(!period) return;
-
-    const transactionType = datasetIndex === 0 ? 'IN' : 'OUT';
-
-    const filteredSupplies = allSupplies.filter(s =>
-        s.dateAdded >= period.start &&
-        s.dateAdded <= period.end &&
-        s.transactionType === transactionType
-    );
-
-    const modalTitle = `${transactionType} Supplies for ${chartInstance.data.labels[index]}`;
-
-    // Include supply date in the modal
-    const modalBody = filteredSupplies.length
-        ? filteredSupplies.map(s => {
-            const dateStr = s.dateAdded.toLocaleDateString(); // format the date
-            return `• ${s.supplyName || 'Unknown'}: ${parseInt(s.transactionAmount) || 1} (Date: ${dateStr})`;
-          }).join('\n')
-        : "No specific supplies for this bar.";
-
-    document.getElementById('modalTitle').textContent = modalTitle;
-    document.getElementById('modalBody').textContent = modalBody;
-
-    openModal(); // Use the fade-in modal function
-}
 
 
+  }
 
-// --- Modal close handlers ---
-document.addEventListener("DOMContentLoaded",()=>{
-  document.getElementById('closeModal').addEventListener('click',()=>{
-    document.getElementById('supplyModal').style.display='none';
+  // --- Toggle More Details ---
+  document.getElementById("btnToggleDetails").addEventListener("click", async () => {
+    const box = document.getElementById("supplyDetails");
+    box.classList.toggle('show');
+    btnToggleDetails.textContent = box.classList.contains('show') ? "Less Details" : "More Details";
+    if (box.classList.contains('show')) populateSupplyDetails();
   });
-  window.addEventListener('click', e=>{
-    const modal = document.getElementById('supplyModal');
-    if(e.target===modal) modal.style.display='none';
-  });
-});
 
-// --- Helpers ---
-function updateChartView(type){
-  if(!chartInstance) return;
-  currentView = type;
+  // --- Update chart view ---
+  function updateChartView(type){
+    currentView = type;
+    chartInstance.data.labels = chartDataSets[type].labels;
+    chartInstance.data.datasets[0].data = chartDataSets[type].dataIn;
+    chartInstance.data.datasets[1].data = chartDataSets[type].dataOut;
+    chartInstance.update();
 
-  chartInstance.data.labels = chartDataSets[type].labels;
-  chartInstance.data.datasets[0].data = chartDataSets[type].dataIn;
-  chartInstance.data.datasets[1].data = chartDataSets[type].dataOut;
-  chartInstance.data.datasets[0].label = "Supplies IN";
-  chartInstance.data.datasets[1].label = "Supplies OUT";
-  chartInstance.update();
+    const box = document.getElementById("supplyDetails");
+    if (box.classList.contains('show')) populateSupplyDetails();
+  }
 
-  chartInstance.custom = { periods: chartDataSets[currentView].periods };
-
-}
-
-function isSameDay(d1,d2){
-  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
-}
-
-document.addEventListener("DOMContentLoaded", loadSuppliesChart);
+  // --- Load chart on page load ---
+  document.addEventListener("DOMContentLoaded", loadSuppliesChart);
 </script>
+
+<script>
+  function showBarDetails(index, datasetIndex){
+  const period = chartDataSets[currentView].periods[index];
+  const type = datasetIndex === 0 ? 'IN' : 'OUT';
+
+  // Filter transactions by period and type
+  const filtered = allTransactions.filter(t => 
+    t.dateAdded >= period.start && t.dateAdded <= period.end && (t.transactionType || 'IN') === type
+  );
+
+  // Group by supply name
+  const suppliesMap = {};
+  filtered.forEach(t => {
+    const name = t.supplyName || t.name || "Unknown";
+    const amount = parseInt(t.transactionAmount) || 0;
+    const date = t.dateAdded.toLocaleDateString();
+    if (!suppliesMap[name]) suppliesMap[name] = [];
+    suppliesMap[name].push({ amount, date });
+  });
+
+  // Build modal content
+  const modalBody = document.getElementById("modalSupplyList");
+  const periodLabel = chartDataSets[currentView].labels[index];
+  let html = `<strong>${type} Supplies for ${periodLabel}</strong><br>`;
+
+  Object.entries(suppliesMap).forEach(([name, entries]) => {
+    entries.forEach(e => {
+      html += `• ${name}: ${e.amount} (Date: ${e.date})<br>`;
+    });
+  });
+
+  modalBody.innerHTML = html;
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('barDetailsModal'));
+  modal.show();
+}
+
+  </script>
+
 
 
 
 <script>
-async function generateSupplyReportPDF(type) {
+async function generateSuppliesReportPDF(type) {
   const { jsPDF } = window.jspdf;
 
-  const response = await fetch("/api/supplies");
-  const supplies = await response.json();
-  
-  // Process dates
-  supplies.forEach(s => {
-    s.dateAdded = s.dateAdded ? new Date(s.dateAdded) : new Date();
-  });
+  // Ensure chart data is loaded
+  if (!chartDataSets[type] || !chartDataSets[type].labels.length) {
+    console.error("Chart data not loaded yet.");
+    return;
+  }
 
+  // Prepare chart image
   const canvas = document.createElement("canvas");
   canvas.width = 800;
   canvas.height = 400;
@@ -839,491 +1135,8 @@ async function generateSupplyReportPDF(type) {
     data: {
       labels: chartDataSets[type].labels,
       datasets: [
-        {
-          label: "Supplies IN",
-          backgroundColor: "#1d7af3",
-          borderColor: "#1d7af3",
-          borderWidth: 1,
-          data: chartDataSets[type].dataIn || []
-        },
-        {
-          label: "Supplies OUT",
-          backgroundColor: "#f3545d",
-          borderColor: "#f3545d",
-          borderWidth: 1,
-          data: chartDataSets[type].dataOut || []
-        }
-      ]
-    },
-    options: {
-      responsive: false,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: "bottom" } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  await new Promise(resolve => setTimeout(resolve, 500));
-  const chartImage = canvas.toDataURL("image/png");
-  chart.destroy();
-
-  const pdf = new jsPDF("landscape", "mm", "a4");
-  
-  // Title and Date
-  pdf.setFontSize(18);
-  pdf.setFont(undefined, 'bold');
-  pdf.text(`Seedling Supply Report - ${type.toUpperCase()}`, 14, 15);
-  pdf.setFontSize(10);
-  pdf.setFont(undefined, 'normal');
-  pdf.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
-
-  // Add chart
-  const imgWidth = 260;
-  const imgHeight = canvas.height * imgWidth / canvas.width;
-  pdf.addImage(chartImage, "PNG", 15, 28, imgWidth, imgHeight);
-
-  // Calculate summary statistics
-  let totalIn = 0;
-  let totalOut = 0;
-  const supplyStats = {};
-
-  supplies.forEach(s => {
-    const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-    
-    if (!supplyStats[s.name]) {
-      supplyStats[s.name] = { in: 0, out: 0, lastTransaction: null };
-    }
-    
-    if (s.transactionType === 'IN') {
-      totalIn += amount;
-      supplyStats[s.name].in += amount;
-    } else if (s.transactionType === 'OUT') {
-      totalOut += amount;
-      supplyStats[s.name].out += amount;
-    }
-    
-    if (!supplyStats[s.name].lastTransaction || s.dateAdded > supplyStats[s.name].lastTransaction) {
-      supplyStats[s.name].lastTransaction = s.dateAdded;
-    }
-  });
-
-  // Summary Section
-  pdf.addPage();
-  pdf.setFontSize(14);
-  pdf.setFont(undefined, 'bold');
-  pdf.text("EXECUTIVE SUMMARY", 14, 15);
-  
-  pdf.autoTable({
-    startY: 22,
-    head: [['Metric', 'Value']],
-    body: [
-      ['Total Supplies Added (IN)', totalIn.toString()],
-      ['Total Supplies Distributed (OUT)', totalOut.toString()],
-      ['Net Available Stock', (totalIn - totalOut).toString()],
-      ['Distribution Rate', totalIn > 0 ? ((totalOut / totalIn) * 100).toFixed(1) + '%' : '0%']
-    ],
-    theme: 'grid',
-    headStyles: { fillColor: [29, 122, 243], fontSize: 11, fontStyle: 'bold' },
-    styles: { fontSize: 10 }
-  });
-
-  // Supply Breakdown
-  pdf.setFontSize(14);
-  pdf.setFont(undefined, 'bold');
-  const summaryEndY = pdf.lastAutoTable.finalY + 10;
-  pdf.text("SUPPLY BREAKDOWN BY PRODUCT", 14, summaryEndY);
-
-  const supplyRows = Object.entries(supplyStats)
-    .map(([name, stats]) => {
-      const total = stats.in + stats.out;
-      const distributionRate = stats.in > 0 ? ((stats.out / stats.in) * 100).toFixed(1) + '%' : '0%';
-      const currentStock = stats.in - stats.out;
-      const lastTransactionStr = stats.lastTransaction ? stats.lastTransaction.toLocaleDateString() : 'Never';
-      return [name, stats.in, stats.out, currentStock, distributionRate, lastTransactionStr];
-    })
-    .sort((a, b) => b[2] - a[2]); // Sort by most distributed
-
-  pdf.autoTable({
-    startY: summaryEndY + 5,
-    head: [['Product Name', 'Received', 'Distributed', 'Current Stock', 'Distribution Rate', 'Last Activity']],
-    body: supplyRows,
-    theme: 'striped',
-    headStyles: { fillColor: [29, 122, 243], fontSize: 10, fontStyle: 'bold' },
-    styles: { fontSize: 9 },
-    columnStyles: {
-      0: { cellWidth: 60 },
-      1: { halign: 'center' },
-      2: { halign: 'center' },
-      3: { halign: 'center' },
-      4: { halign: 'center' },
-      5: { halign: 'center' }
-    }
-  });
-
-  // Detailed Transaction Log
-  pdf.addPage();
-  pdf.setFontSize(14);
-  pdf.setFont(undefined, 'bold');
-  pdf.text("DETAILED TRANSACTION LOG", 14, 15);
-
-  const transactionRows = supplies
-    .sort((a, b) => b.dateAdded - a.dateAdded)
-    .slice(0, 50) // Show last 50 transactions
-    .map(s => {
-      const amount = s.transactionAmount ? parseInt(s.transactionAmount) : parseInt(s.quantity) || 0;
-      return [
-        s.dateAdded.toLocaleDateString(),
-        s.name,
-        s.transactionType,
-        amount.toString(),
-        s.quantity.toString()
-      ];
-    });
-
-  pdf.autoTable({
-    startY: 22,
-    head: [['Date', 'Product', 'Type', 'Amount', 'Current Stock']],
-    body: transactionRows,
-    theme: 'grid',
-    headStyles: { fillColor: [29, 122, 243], fontSize: 10, fontStyle: 'bold' },
-    styles: { fontSize: 8 },
-    columnStyles: {
-      0: { cellWidth: 30 },
-      1: { cellWidth: 70 },
-      2: { cellWidth: 20, halign: 'center' },
-      3: { halign: 'center' },
-      4: { halign: 'center' }
-    },
-    didDrawCell: function(data) {
-      if (data.section === 'body' && data.column.index === 2) {
-        if (data.cell.raw === 'OUT') {
-          pdf.setTextColor(243, 84, 93);
-          pdf.text('OUT', data.cell.x + 5, data.cell.y + 5);
-          pdf.setTextColor(0, 0, 0);
-        } else if (data.cell.raw === 'IN') {
-          pdf.setTextColor(29, 122, 243);
-          pdf.text('IN', data.cell.x + 5, data.cell.y + 5);
-          pdf.setTextColor(0, 0, 0);
-        }
-      }
-    }
-  });
-
-  // Insights & Recommendations
-  pdf.addPage();
-  pdf.setFontSize(14);
-  pdf.setFont(undefined, 'bold');
-  pdf.text("INSIGHTS & RECOMMENDATIONS", 14, 15);
-  
-  pdf.setFontSize(10);
-  pdf.setFont(undefined, 'normal');
-  
-  // Find most distributed supply
-  const mostDistributed = Object.entries(supplyStats)
-    .sort((a, b) => b[1].out - a[1].out)[0];
-  
-  // Find least distributed supply
-  const leastDistributed = Object.entries(supplyStats)
-    .filter(([name, stats]) => stats.in > 0)
-    .sort((a, b) => a[1].out - b[1].out)[0];
-  
-  // Find low stock items
-  const lowStockItems = Object.entries(supplyStats)
-    .filter(([name, stats]) => {
-      const currentStock = stats.in - stats.out;
-      return currentStock > 0 && currentStock < 10; // Low stock threshold
-    });
-  
-  // Find overstocked items
-  const overStockedItems = Object.entries(supplyStats)
-    .filter(([name, stats]) => {
-      const currentStock = stats.in - stats.out;
-      const distributionRate = stats.in > 0 ? (stats.out / stats.in) : 0;
-      return currentStock > 50 && distributionRate < 0.3; // High stock, low distribution
-    });
-
-  let yPos = 25;
-  
-  if (mostDistributed) {
-    pdf.setFont(undefined, 'bold');
-    pdf.text("• Most Distributed Supply:", 14, yPos);
-    pdf.setFont(undefined, 'normal');
-    pdf.text(`${mostDistributed[0]} (${mostDistributed[1].out} units distributed)`, 25, yPos + 5);
-    pdf.text(`High demand item - ensure adequate stock levels.`, 25, yPos + 10);
-    yPos += 20;
-  }
-  
-  if (leastDistributed) {
-    pdf.setFont(undefined, 'bold');
-    pdf.text("• Least Distributed Supply:", 14, yPos);
-    pdf.setFont(undefined, 'normal');
-    pdf.text(`${leastDistributed[0]} (only ${leastDistributed[1].out} units distributed)`, 25, yPos + 5);
-    pdf.text(`Low demand - review if procurement is necessary.`, 25, yPos + 10);
-    yPos += 20;
-  }
-  
-  if (lowStockItems.length > 0) {
-    pdf.setFont(undefined, 'bold');
-    pdf.text("⚠ Low Stock Alert (Less than 10 units):", 14, yPos);
-    pdf.setFont(undefined, 'normal');
-    lowStockItems.slice(0, 5).forEach(([name, stats]) => {
-      yPos += 5;
-      const currentStock = stats.in - stats.out;
-      pdf.text(`- ${name}: ${currentStock} units remaining`, 25, yPos);
-    });
-    yPos += 10;
-    pdf.text(`Consider restocking these items soon.`, 25, yPos);
-    yPos += 10;
-  }
-  
-  if (overStockedItems.length > 0) {
-    yPos += 5;
-    pdf.setFont(undefined, 'bold');
-    pdf.text("• Overstocked Items (High stock, low distribution):", 14, yPos);
-    pdf.setFont(undefined, 'normal');
-    overStockedItems.slice(0, 5).forEach(([name, stats]) => {
-      yPos += 5;
-      const currentStock = stats.in - stats.out;
-      const distributionRate = ((stats.out / stats.in) * 100).toFixed(1);
-      pdf.text(`- ${name}: ${currentStock} units (${distributionRate}% distributed)`, 25, yPos);
-    });
-    yPos += 10;
-    pdf.text(`Consider promoting distribution or reducing procurement.`, 25, yPos);
-    yPos += 10;
-  }
-  
-  yPos += 10;
-  const avgDistribution = Object.values(supplyStats).reduce((sum, s) => {
-    return sum + (s.in > 0 ? (s.out / s.in) : 0);
-  }, 0) / Object.keys(supplyStats).length;
-  
-  pdf.setFont(undefined, 'bold');
-  pdf.text("• Overall Distribution Efficiency:", 14, yPos);
-  pdf.setFont(undefined, 'normal');
-  pdf.text(`Average: ${(avgDistribution * 100).toFixed(1)}%`, 25, yPos + 5);
-  
-  if (avgDistribution < 0.4) {
-    pdf.text(`Low distribution rate. Review distribution channels and demand.`, 25, yPos + 10);
-  } else if (avgDistribution > 0.8) {
-    pdf.text(`High distribution rate. Ensure adequate stock replenishment.`, 25, yPos + 10);
-  } else {
-    pdf.text(`Distribution efficiency is within healthy range (40-80%).`, 25, yPos + 10);
-  }
-
-  pdf.save(`seedling-supply-report-${type}-${new Date().toISOString().split('T')[0]}.pdf`);
-}
-</script>
-
-
-  <!--equpment-->
-   <script>
-let equipmentChartInstance;
-let equipmentChartDataSets = {
-  daily: { labels: [], dataUsed: [], dataUnused: [] },
-  weekly: { labels: [], dataUsed: [], dataUnused: [] },
-  monthly: { labels: [], dataUsed: [], dataUnused: [] }
-};
-
-async function loadEquipmentChart() {
-  try {
-    // Fetch transactions (admin stock-in/out)
-    const response = await fetch("/api/equipment/transactions");
-    const transactions = await response.json();
-    transactions.forEach(t => t.dateAdded = t.dateAdded ? new Date(t.dateAdded) : new Date());
-
-    // Fetch borrow history
-    const borrowRes = await fetch("/api/borrow/history");
-    const borrowHistory = await borrowRes.json();
-    borrowHistory.forEach(b => b.dateBorrowed = new Date(b.dateBorrowed));
-    borrowHistory.forEach(b => { if(b.dateReturned) b.dateReturned = new Date(b.dateReturned); });
-
-    // DAILY (last 7 days)
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date();
-      day.setDate(day.getDate() - i);
-      const label = day.toLocaleDateString();
-
-      let totalUsed = 0;   // borrow + unreturned
-      let totalUnused = 0; // admin stock-in
-
-      // Add OUT from transactions (optional, can be skipped if only borrow matters)
-      transactions
-        .filter(t => isSameDay(t.dateAdded, day))
-        .forEach(t => {
-          if(t.transactionType === 'OUT'){
-            totalUsed += parseInt(t.transactionAmount) || 0;
-          } else if(t.transactionType === 'IN'){
-            totalUnused += parseInt(t.transactionAmount) || 0;
-          }
-        });
-
-      // Add borrowed items from borrow_history
-      borrowHistory
-        .filter(b => b.status === "ACCEPTED" && isSameDay(b.dateBorrowed, day))
-        .forEach(b => totalUsed += parseInt(b.quantity) || 0);
-
-      equipmentChartDataSets.daily.labels.push(label);
-      equipmentChartDataSets.daily.dataUsed.push(totalUsed);
-      equipmentChartDataSets.daily.dataUnused.push(totalUnused);
-    }
-
-    // WEEKLY (last 4 weeks)
-    for (let i = 3; i >= 0; i--) {
-      const weekStart = getStartOfWeek(new Date());
-      weekStart.setDate(weekStart.getDate() - i * 7);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      const label = `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
-
-      let totalUsed = 0;
-      let totalUnused = 0;
-
-      transactions.filter(t => t.dateAdded >= weekStart && t.dateAdded <= weekEnd)
-        .forEach(t => {
-          if(t.transactionType === 'OUT') totalUsed += parseInt(t.transactionAmount)||0;
-          else if(t.transactionType === 'IN') totalUnused += parseInt(t.transactionAmount)||0;
-        });
-
-      borrowHistory.filter(b => b.status === "ACCEPTED" && b.dateBorrowed >= weekStart && b.dateBorrowed <= weekEnd)
-        .forEach(b => totalUsed += parseInt(b.quantity)||0);
-
-      equipmentChartDataSets.weekly.labels.push(label);
-      equipmentChartDataSets.weekly.dataUsed.push(totalUsed);
-      equipmentChartDataSets.weekly.dataUnused.push(totalUnused);
-    }
-
-    // MONTHLY (last 12 months)
-    const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    for(let i=11;i>=0;i--){
-      const month = new Date();
-      month.setMonth(month.getMonth()-i);
-      const label = `${monthNames[month.getMonth()]} ${month.getFullYear()}`;
-
-      let totalUsed = 0;
-      let totalUnused = 0;
-
-      transactions.filter(t => t.dateAdded.getMonth() === month.getMonth() && t.dateAdded.getFullYear()===month.getFullYear())
-        .forEach(t => { if(t.transactionType==='OUT') totalUsed+=parseInt(t.transactionAmount)||0; else if(t.transactionType==='IN') totalUnused+=parseInt(t.transactionAmount)||0; });
-
-      borrowHistory.filter(b => b.status==="ACCEPTED" && b.dateBorrowed.getMonth()===month.getMonth() && b.dateBorrowed.getFullYear()===month.getFullYear())
-        .forEach(b => totalUsed += parseInt(b.quantity)||0);
-
-      equipmentChartDataSets.monthly.labels.push(label);
-      equipmentChartDataSets.monthly.dataUsed.push(totalUsed);
-      equipmentChartDataSets.monthly.dataUnused.push(totalUnused);
-    }
-
-    // Create chart
-    const ctx = document.getElementById("equipmentChart").getContext("2d");
-    equipmentChartInstance = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: equipmentChartDataSets.daily.labels,
-        datasets: [
-          { label: "Equipment USED", backgroundColor: "#f3545d", borderColor: "#f3545d", borderWidth: 1, data: equipmentChartDataSets.daily.dataUsed },
-          { label: "Equipment UNUSED", backgroundColor: "#31ce36", borderColor: "#31ce36", borderWidth: 1, data: equipmentChartDataSets.daily.dataUnused }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend:{position:"bottom",labels:{padding:10}}, tooltip:{mode:"index",intersect:false,padding:10} }, layout:{padding:{left:15,right:15,top:15,bottom:15}}, scales:{y:{beginAtZero:true}} }
-    });
-
-  } catch(err){ console.error("Error loading equipment chart:", err); }
-}
-
-
-function updateEquipmentChartView(type) {
-  if (!equipmentChartInstance) return;
-  equipmentChartInstance.data.labels = equipmentChartDataSets[type].labels;
-  equipmentChartInstance.data.datasets[0].data = equipmentChartDataSets[type].dataUsed;
-  equipmentChartInstance.data.datasets[1].data = equipmentChartDataSets[type].dataUnused;
-  equipmentChartInstance.update();
-}
-
-function isSameDay(d1, d2) {
-  return d1.getFullYear() === d2.getFullYear() &&
-         d1.getMonth() === d2.getMonth() &&
-         d1.getDate() === d2.getDate();
-}
-
-function getStartOfWeek(date) {
-  const day = new Date(date);
-  const dayOfWeek = day.getDay();
-  const diff = day.getDate() - dayOfWeek;
-  day.setDate(diff);
-  day.setHours(0, 0, 0, 0);
-  return day;
-}
-
-document.addEventListener("DOMContentLoaded", loadEquipmentChart);
-</script>
-
-<!-- Equipment PDF Report Script -->
-<script>
-async function generateEquipmentReportPDF(type) {
-  const { jsPDF } = window.jspdf;
-
-  // Ensure chart data is loaded
-  if (!equipmentChartDataSets[type] || !equipmentChartDataSets[type].labels.length) {
-    console.error("Chart data not loaded yet.");
-    return;
-  }
-
-  // Fetch transactions (admin stock-in/out)
-  const response = await fetch("/api/equipment/transactions");
-  const transactions = await response.json();
-  transactions.forEach(t => t.dateAdded = t.dateAdded ? new Date(t.dateAdded) : new Date());
-
-  // Fetch borrow history
-  const borrowRes = await fetch("/api/borrow/history");
-  const borrowHistory = await borrowRes.json();
-  borrowHistory.forEach(b => b.dateBorrowed = new Date(b.dateBorrowed));
-  borrowHistory.forEach(b => { if(b.dateReturned) b.dateReturned = new Date(b.dateReturned); });
-
-  // Collect equipment stats
-  const equipmentStats = {};
-
-  // Stock-in from transactions
-  transactions.forEach(t => {
-    const name = t.equipmentName;
-    const amount = parseInt(t.transactionAmount) || 0;
-    if (!equipmentStats[name]) equipmentStats[name] = { stockIn:0, borrowed:0, returned:0, unreturned:0, lastUsed:null };
-    if (t.transactionType === 'IN') equipmentStats[name].stockIn += amount;
-    else if (t.transactionType === 'OUT') {
-      if (!equipmentStats[name].lastUsed || t.dateAdded > equipmentStats[name].lastUsed)
-        equipmentStats[name].lastUsed = t.dateAdded;
-    }
-  });
-
-  // Borrow history
-  borrowHistory.forEach(b => {
-    if (b.status !== "ACCEPTED") return;
-    const name = b.equipmentName;
-    const qty = parseInt(b.quantity) || 0;
-    if (!equipmentStats[name]) equipmentStats[name] = { stockIn:0, borrowed:0, returned:0, unreturned:0, lastUsed:null };
-    equipmentStats[name].borrowed += qty;
-    if (b.dateReturned) equipmentStats[name].returned += qty;
-    if (!equipmentStats[name].lastUsed || b.dateBorrowed > equipmentStats[name].lastUsed)
-      equipmentStats[name].lastUsed = b.dateBorrowed;
-  });
-
-  Object.values(equipmentStats).forEach(stats => {
-    stats.unreturned = stats.borrowed - stats.returned;
-    stats.currentQty = stats.stockIn + stats.returned - stats.borrowed;
-  });
-
-  // Create chart image based on selected type
-  const canvas = document.createElement("canvas");
-  canvas.width = 800;
-  canvas.height = 400;
-  const ctx = canvas.getContext("2d");
-
-  const chart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: equipmentChartDataSets[type].labels,
-      datasets: [
-        { label: "Equipment USED", backgroundColor: "#f3545d", data: equipmentChartDataSets[type].dataUsed },
-        { label: "Equipment UNUSED", backgroundColor: "#31ce36", data: equipmentChartDataSets[type].dataUnused }
+        { label: "Supplies IN", backgroundColor: "#1d7af3", borderColor: "#1d7af3", borderWidth: 1, data: chartDataSets[type].dataIn },
+        { label: "Supplies OUT", backgroundColor: "#f3545d", borderColor: "#f3545d", borderWidth: 1, data: chartDataSets[type].dataOut }
       ]
     },
     options: { responsive:false, plugins:{legend:{position:"bottom"}}, scales:{y:{beginAtZero:true}} }
@@ -1335,11 +1148,9 @@ async function generateEquipmentReportPDF(type) {
 
   // Initialize PDF
   const pdf = new jsPDF("landscape","mm","a4");
-
-  // Title
   pdf.setFontSize(18);
   pdf.setFont(undefined,'bold');
-  pdf.text(`Equipment Report - ${type.toUpperCase()}`,14,15);
+  pdf.text(`Supplies Report - ${type.toUpperCase()}`,14,15);
   pdf.setFontSize(10);
   pdf.setFont(undefined,'normal');
   pdf.text(`Generated: ${new Date().toLocaleString()}`,14,22);
@@ -1349,10 +1160,25 @@ async function generateEquipmentReportPDF(type) {
   const imgHeight = canvas.height * imgWidth / canvas.width;
   pdf.addImage(chartImage, "PNG", 15, 28, imgWidth, imgHeight);
 
-  // Summary statistics
-  const totalUsed = equipmentChartDataSets[type].dataUsed.reduce((a,b)=>a+b,0);
-  const totalUnused = equipmentChartDataSets[type].dataUnused.reduce((a,b)=>a+b,0);
-  const netAvailable = totalUnused - totalUsed;
+  // Aggregate stats for summary and tables
+  const stats = {};
+  allTransactions.forEach(s => {
+    const name = s.supplyName || s.name || "Unknown";
+    const qty = parseInt(s.transactionAmount) || 0;
+    if (!stats[name]) stats[name] = { in:0, out:0, lastTransaction:null, currentStock:0 };
+    if ((s.transactionType||'IN') === 'IN') stats[name].in += qty;
+    else stats[name].out += qty;
+    stats[name].currentStock = s.newQuantity || (stats[name].in - stats[name].out);
+    if (!stats[name].lastTransaction || s.dateAdded > stats[name].lastTransaction) stats[name].lastTransaction = s.dateAdded;
+  });
+
+  // ================================
+  // EXECUTIVE SUMMARY
+  // ================================
+  const totalIn = Object.values(stats).reduce((sum,s)=>sum+s.in,0);
+  const totalOut = Object.values(stats).reduce((sum,s)=>sum+s.out,0);
+  const netStock = totalIn - totalOut;
+  const distributionRate = totalIn > 0 ? (totalOut/totalIn)*100 : 0;
 
   pdf.addPage();
   pdf.setFontSize(14);
@@ -1363,71 +1189,88 @@ async function generateEquipmentReportPDF(type) {
     startY:22,
     head:[['Metric','Value']],
     body:[
-      ['Total Equipment Added (Stock-In)', totalUnused],
-      ['Total Equipment Used (Borrowed + OUT)', totalUsed],
-      ['Net Available', netAvailable],
-      ['Utilization Rate', totalUnused > 0 ? ((totalUsed / totalUnused)*100).toFixed(1)+'%' : '0%']
+      ['Total Supplies Added (IN)', totalIn],
+      ['Total Supplies Distributed (OUT)', totalOut],
+      ['Net Available Stock', netStock],
+      ['Distribution Rate', distributionRate.toFixed(1)+'%']
     ],
     theme:'grid',
     headStyles:{fillColor:[29,122,243], fontSize:11, fontStyle:'bold'},
     styles:{fontSize:10}
   });
 
-  // Equipment Usage Breakdown
+  // ================================
+  // SUPPLY BREAKDOWN TABLE
+  // ================================
+  const breakdownRows = Object.entries(stats).map(([name,s])=>{
+    const distributionRate = s.in>0?((s.out/s.in)*100).toFixed(1)+'%':'0%';
+    const lastActivity = s.lastTransaction ? s.lastTransaction.toLocaleDateString() : '-';
+    return [name, s.in, s.out, s.currentStock, distributionRate, lastActivity];
+  });
+
   pdf.setFontSize(14);
   pdf.setFont(undefined,'bold');
-  const summaryEndY = pdf.lastAutoTable.finalY + 10;
-  pdf.text("EQUIPMENT USAGE BREAKDOWN",14,summaryEndY);
-
-  const equipmentRows = Object.entries(equipmentStats).map(([name,stats])=>{
-    const utilizationRate = stats.borrowed+stats.stockIn>0?((stats.borrowed/(stats.borrowed+stats.stockIn))*100).toFixed(1)+'%':'0%';
-    return [
-      name, stats.stockIn, stats.borrowed, stats.returned, stats.unreturned, stats.currentQty, utilizationRate, stats.lastUsed?stats.lastUsed.toLocaleDateString():'Never'
-    ];
-  }).sort((a,b)=>b[2]-a[2]);
+  const breakdownStartY = pdf.lastAutoTable.finalY + 10;
+  pdf.text("SUPPLY BREAKDOWN",14,breakdownStartY);
 
   pdf.autoTable({
-    startY: summaryEndY+5,
-    head:[['Equipment Name','Stock-In','Borrowed','Returned','Unreturned','Quantity Available','Usage Rate','Last Used']],
-    body:equipmentRows,
+    startY: breakdownStartY+5,
+    head:[['Supply Name','IN','OUT','Current Stock','Distribution Rate','Last Transaction']],
+    body: breakdownRows,
     theme:'striped',
     headStyles:{fillColor:[29,122,243], fontSize:10, fontStyle:'bold'},
     styles:{fontSize:9},
     columnStyles:{
-      0:{cellWidth:60}, 1:{halign:'center'},2:{halign:'center'},3:{halign:'center'},4:{halign:'center'},5:{halign:'center'},6:{halign:'center'},7:{halign:'center'}
+      0:{cellWidth:60}, 1:{halign:'center'},2:{halign:'center'},3:{halign:'center'},4:{halign:'center'},5:{halign:'center'}
     }
   });
 
-  // Detailed Unreturned Items Log
-  const unreturnedItems = borrowHistory.filter(b=>b.status==='ACCEPTED' && !b.dateReturned);
-
-  if(unreturnedItems.length>0){
-    pdf.addPage();
-    pdf.setFontSize(14);
-    pdf.setFont(undefined,'bold');
-    pdf.text("DETAILED UNRETURNED ITEMS LOG",14,15);
-
-    const unreturnedRows = unreturnedItems.map(b=>[
-      b.dateBorrowed.toLocaleDateString(),
-      b.equipmentName,
-      b.quantity,
-      b.borrowerName
-    ]);
-
-    pdf.autoTable({
-      startY:22,
-      head:[['Date Borrowed','Equipment','Quantity','Borrower']],
-      body:unreturnedRows,
-      theme:'grid',
-      headStyles:{fillColor:[243,84,93], fontSize:10, fontStyle:'bold'},
-      styles:{fontSize:9},
-      columnStyles:{
-        0:{cellWidth:30}, 1:{cellWidth:60}, 2:{halign:'center'}, 3:{halign:'center'}
-      }
+  // ================================
+  // DETAILED TRANSACTION LOG
+  // ================================
+  const transactionRows = allTransactions
+    .sort((a,b)=>b.dateAdded - a.dateAdded)
+    .map(s=>{
+      const initial = s.previousQuantity||0;
+      const amount = parseInt(s.transactionAmount)||0;
+      const current = s.newQuantity||initial;
+      return [
+        s.dateAdded.toLocaleDateString(),
+        s.supplyName||s.name||'Unknown',
+        s.transactionType,
+        amount,
+        initial,
+        current
+      ];
     });
-  }
 
-  // Insights & Recommendations
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.setFont(undefined,'bold');
+  pdf.text("DETAILED TRANSACTION LOG",14,15);
+
+  pdf.autoTable({
+    startY:22,
+    head:[['Date','Supply Name','Type','Amount','Previous Qty','New Qty']],
+    body: transactionRows,
+    theme:'grid',
+    headStyles:{fillColor:[243,84,93], fontSize:10, fontStyle:'bold'},
+    styles:{fontSize:9},
+    columnStyles:{
+      0:{cellWidth:30},1:{cellWidth:50},2:{halign:'center'},3:{halign:'center'},4:{halign:'center'},5:{halign:'center'}
+    }
+  });
+
+  // ================================
+  // INSIGHTS & RECOMMENDATIONS
+  // ================================
+  const entries = Object.entries(stats);
+  const now = new Date();
+  const lowStock = entries.filter(([n,s])=>s.currentStock>0 && s.currentStock<10);
+  const overStocked = entries.filter(([n,s])=>s.currentStock>50 && s.in>0 && (s.out/s.in)<0.3 && (now - s.lastTransaction)/(1000*60*60*24) > 7);
+  const mostDistributed = entries.sort((a,b)=>b[1].out - a[1].out)[0];
+  const leastDistributed = entries.filter(([n,s])=>s.in>0 && (now - s.lastTransaction)/(1000*60*60*24)>7).sort((a,b)=>a[1].out - b[1].out)[0];
+
   pdf.addPage();
   pdf.setFontSize(14);
   pdf.setFont(undefined,'bold');
@@ -1435,30 +1278,874 @@ async function generateEquipmentReportPDF(type) {
   pdf.setFontSize(10);
   pdf.setFont(undefined,'normal');
 
-  const mostUsed = Object.entries(equipmentStats).sort((a,b)=>b[1].borrowed-a[1].borrowed)[0];
-  const leastUsed = Object.entries(equipmentStats).filter(([n,s])=>s.stockIn>0).sort((a,b)=>a[1].borrowed-b[1].borrowed)[0];
-  const notUsedRecently = Object.entries(equipmentStats).filter(([n,s])=>{
-    if(!s.lastUsed) return true;
-    const days = (new Date()-s.lastUsed)/(1000*60*60*24);
-    return days>30;
-  });
+  let yPos = 22;
+  if(mostDistributed) { pdf.setFont(undefined,'bold'); pdf.text("• Most Distributed Supply:",14,yPos); pdf.setFont(undefined,'normal'); pdf.text(`${mostDistributed[0]} (${mostDistributed[1].out} units)`,25,yPos+5); yPos+=15; }
+  if(leastDistributed) { pdf.setFont(undefined,'bold'); pdf.text("• Least Distributed Supply:",14,yPos); pdf.setFont(undefined,'normal'); pdf.text(`${leastDistributed[0]} (${leastDistributed[1].out} units)`,25,yPos+5); yPos+=15; }
+  if(lowStock.length>0){ pdf.setFont(undefined,'bold'); pdf.text("• Low Stock Items (<10 units):",14,yPos); pdf.setFont(undefined,'normal'); lowStock.forEach(([n,s])=>{ pdf.text(`- ${n} (${s.currentStock} units)`,25,yPos+=5); }); yPos+=10; }
+  if(overStocked.length>0){ pdf.setFont(undefined,'bold'); pdf.text("• Overstocked Items (>50 units, low distribution):",14,yPos); pdf.setFont(undefined,'normal'); overStocked.forEach(([n,s])=>{ pdf.text(`- ${n} (${s.currentStock} units, ${(s.out/s.in*100).toFixed(1)}% distributed)`,25,yPos+=5); }); yPos+=10; }
 
-  let yPos=25;
-  if(mostUsed){ pdf.setFont(undefined,'bold'); pdf.text("• Most Used Equipment:",14,yPos); pdf.setFont(undefined,'normal'); pdf.text(`${mostUsed[0]} (${mostUsed[1].borrowed} units borrowed)`,25,yPos+5); pdf.text(`Consider maintaining higher stock levels.`,25,yPos+10); yPos+=20; }
-  if(leastUsed){ pdf.setFont(undefined,'bold'); pdf.text("• Least Used Equipment:",14,yPos); pdf.setFont(undefined,'normal'); pdf.text(`${leastUsed[0]} (${leastUsed[1].borrowed} units borrowed)`,25,yPos+5); pdf.text(`Consider reducing stock or reallocating resources.`,25,yPos+10); yPos+=20; }
-  if(notUsedRecently.length>0){ pdf.setFont(undefined,'bold'); pdf.text("• Equipment Not Used Recently (30+ days):",14,yPos); pdf.setFont(undefined,'normal'); notUsedRecently.slice(0,5).forEach(([name, stats])=>{ yPos+=5; const daysAgo=stats.lastUsed?Math.floor((new Date()-stats.lastUsed)/(1000*60*60*24)):'Never'; pdf.text(`- ${name} (Last used: ${daysAgo==='Never'?'Never':daysAgo+' days ago'})`,25,yPos); }); yPos+=10; pdf.text(`Review if these items are still needed in inventory.`,25,yPos); }
+  const avgDistribution = entries.reduce((sum,[n,s])=>sum+(s.in>0?s.out/s.in:0),0)/entries.length;
+  pdf.setFont(undefined,'bold'); pdf.text("• Overall Distribution Efficiency:",14,yPos); pdf.setFont(undefined,'normal'); pdf.text(`${(avgDistribution*100).toFixed(1)}% - ${(avgDistribution<0.4?'Low':avgDistribution>0.8?'High':'Healthy')} distribution`,25,yPos+5);
 
-  yPos+=15;
-  const avgUtil = Object.values(equipmentStats).reduce((sum,s)=>{ const total=s.borrowed+s.stockIn; return sum + (total>0?(s.borrowed/total):0); },0)/Object.keys(equipmentStats).length;
-  pdf.setFont(undefined,'bold'); pdf.text("• Overall Equipment Utilization:",14,yPos);
-  pdf.setFont(undefined,'normal'); pdf.text(`Average: ${(avgUtil*100).toFixed(1)}%`,25,yPos+5);
-  if(avgUtil<0.5) pdf.text(`Low utilization detected. Consider reviewing procurement practices.`,25,yPos+10);
-  else if(avgUtil>0.8) pdf.text(`High utilization. Monitor stock levels to prevent shortages.`,25,yPos+10);
-  else pdf.text(`Utilization is within healthy range (50-80%).`,25,yPos+10);
-
-  pdf.save(`equipment-report-${type}-${new Date().toISOString().split('T')[0]}.pdf`);
+  pdf.save(`supplies-report-${type}-${new Date().toISOString().split('T')[0]}.pdf`);
 }
 </script>
+
+
+
+
+
+
+
+
+
+<script>
+  document
+  .getElementById("btnToggleEquipmentDetails")
+  .addEventListener("click", async () => {
+
+    const box = document.getElementById("equipmentDetails");
+
+    box.classList.toggle("show");
+
+    btnToggleEquipmentDetails.textContent =
+      box.classList.contains("show")
+        ? "Less Details"
+        : "More Details";
+
+    if (box.classList.contains("show")) {
+      await populateEquipmentDetails();
+    }
+});
+
+</script>
+
+
+
+
+
+
+
+  <!--equpment-->
+<script>
+let equipmentChartInstance;
+let equipmentChartDataSets = {
+  daily: { labels: [], dataUsed: [], dataUnused: [] },
+  weekly: { labels: [], dataUsed: [], dataUnused: [] },
+  monthly: { labels: [], dataUsed: [], dataUnused: [] }
+};
+
+// -----------------------------
+// DATE HELPERS
+// -----------------------------
+function parseDateString(dateStr) {
+  // Parse as local datetime (NO Z)
+  return new Date(dateStr.replace(" ", "T"));
+}
+
+
+function dayKey(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function getStartOfWeek(date) {
+  const d = new Date(date);
+  const diff = d.getDate() - d.getDay();
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// -----------------------------
+// LOAD CHART DATA
+// -----------------------------
+async function loadEquipmentChart() {
+  try {
+    // Fetch data
+    const [transRes, borrowRes] = await Promise.all([
+      fetch("/api/equipment/transactions"),
+      fetch("/api/borrow/history")
+    ]);
+
+    const transactions = await transRes.json();
+    const borrowHistory = await borrowRes.json();
+
+    // Normalize dates
+    transactions.forEach(t => {
+      t.dateAdded = t.dateAdded ? parseDateString(t.dateAdded) : null;
+    });
+
+    borrowHistory.forEach(b => {
+      b.dateBorrowed = b.dateBorrowed ? parseDateString(b.dateBorrowed) : null;
+      if (b.dateReturned) b.dateReturned = parseDateString(b.dateReturned);
+    });
+
+    // -----------------------------
+    // EVENT AGGREGATION
+    // -----------------------------
+    const usedByDay = {};    // borrow events
+    const unusedByDay = {}; // stock-in events
+
+    // Borrowed = USED
+    borrowHistory.forEach(b => {
+      if (!["ACCEPTED", "RETURNED"].includes(b.status)) return;
+      if (!b.dateBorrowed) return;
+
+      const key = dayKey(b.dateBorrowed);
+      usedByDay[key] = (usedByDay[key] || 0) + (parseInt(b.quantity) || 0);
+    });
+
+    // Stock-in = UNUSED
+    transactions.forEach(t => {
+      if (t.transactionType !== "IN" || !t.dateAdded) return;
+
+      const key = dayKey(t.dateAdded);
+      unusedByDay[key] = (unusedByDay[key] || 0) + (parseInt(t.transactionAmount) || 0);
+    });
+
+    // -----------------------------
+    // DAILY (LAST 7 DAYS)
+    // -----------------------------
+    equipmentChartDataSets.daily = { labels: [], dataUsed: [], dataUnused: [] };
+
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+
+      const key = dayKey(day);
+      equipmentChartDataSets.daily.labels.push(day.toLocaleDateString());
+      equipmentChartDataSets.daily.dataUsed.push(usedByDay[key] || 0);
+      equipmentChartDataSets.daily.dataUnused.push(unusedByDay[key] || 0);
+    }
+
+    // -----------------------------
+    // WEEKLY (LAST 4 WEEKS)
+    // -----------------------------
+    equipmentChartDataSets.weekly = { labels: [], dataUsed: [], dataUnused: [] };
+
+for (let i = 3; i >= 0; i--) {
+  const weekStart = getStartOfWeek(new Date());
+  weekStart.setDate(weekStart.getDate() - i * 7);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  let used = 0;
+  let unused = 0;
+
+  for (let d = new Date(weekStart); d <= weekEnd; ) {
+    const key = dayKey(d);
+    used += usedByDay[key] || 0;
+    unused += unusedByDay[key] || 0;
+
+    d = new Date(d);
+    d.setDate(d.getDate() + 1);
+  }
+
+  equipmentChartDataSets.weekly.labels.push(
+    `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`
+  );
+  equipmentChartDataSets.weekly.dataUsed.push(used);
+  equipmentChartDataSets.weekly.dataUnused.push(unused);
+}
+
+    // -----------------------------
+    // MONTHLY (LAST 12 MONTHS)
+    // -----------------------------
+    equipmentChartDataSets.monthly = { labels: [], dataUsed: [], dataUnused: [] };
+
+    for (let i = 11; i >= 0; i--) {
+      const month = new Date();
+      month.setMonth(month.getMonth() - i);
+
+      const year = month.getFullYear();
+      const m = month.getMonth();
+
+      let used = 0;
+      let unused = 0;
+
+      Object.entries(usedByDay).forEach(([key, val]) => {
+        const d = new Date(key);
+        if (d.getFullYear() === year && d.getMonth() === m) used += val;
+      });
+
+      Object.entries(unusedByDay).forEach(([key, val]) => {
+        const d = new Date(key);
+        if (d.getFullYear() === year && d.getMonth() === m) unused += val;
+      });
+
+      equipmentChartDataSets.monthly.labels.push(
+        `${month.toLocaleString("default", { month: "short" })} ${year}`
+      );
+      equipmentChartDataSets.monthly.dataUsed.push(used);
+      equipmentChartDataSets.monthly.dataUnused.push(unused);
+    }
+
+    // -----------------------------
+    // CREATE CHART
+    // -----------------------------
+    const ctx = document.getElementById("equipmentChart").getContext("2d");
+
+    equipmentChartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: equipmentChartDataSets.daily.labels,
+        datasets: [
+          {
+            label: "Equipment USED",
+            data: equipmentChartDataSets.daily.dataUsed,
+            backgroundColor: "#f3545d",
+            borderColor: "#f3545d",
+            borderWidth: 1
+          },
+          {
+            label: "Equipment UNUSED",
+            data: equipmentChartDataSets.daily.dataUnused,
+            backgroundColor: "#31ce36",
+            borderColor: "#31ce36",
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: { mode: "index", intersect: false }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("Error loading equipment chart:", err);
+  }
+}
+
+// -----------------------------
+// VIEW SWITCHER
+// -----------------------------
+function updateEquipmentChartView(type) {
+  if (!equipmentChartInstance) return;
+
+  equipmentChartInstance.data.labels = equipmentChartDataSets[type].labels;
+  equipmentChartInstance.data.datasets[0].data = equipmentChartDataSets[type].dataUsed;
+  equipmentChartInstance.data.datasets[1].data = equipmentChartDataSets[type].dataUnused;
+  equipmentChartInstance.update();
+}
+
+document.addEventListener("DOMContentLoaded", loadEquipmentChart);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  async function populateEquipmentDetails() {
+    const breakdownBody = document.getElementById("equipmentBreakdownBody");
+    const unreturnedBody = document.getElementById("equipmentUnreturnedBody");
+    const returnedBody = document.getElementById("equipmentReturnedBody");
+    const executiveBody = document.getElementById("equipmentExecutiveSummaryBody");
+    const insightsList = document.getElementById("equipmentInsightsList");
+
+    // Clear previous content
+    breakdownBody.innerHTML = "";
+    unreturnedBody.innerHTML = "";
+    returnedBody.innerHTML = "";
+    executiveBody.innerHTML = "";
+    insightsList.innerHTML = "";
+
+    // Fetch transactions and borrow history
+    const [transRes, borrowRes] = await Promise.all([
+      fetch("/api/equipment/transactions"),
+      fetch("/api/borrow/history")
+    ]);
+    const transactions = await transRes.json();
+    const borrowHistory = await borrowRes.json();
+
+    // Normalize dates
+    transactions.forEach(t => t.dateAdded = t.dateAdded ? new Date(t.dateAdded) : new Date());
+    borrowHistory.forEach(b => b.dateBorrowed = new Date(b.dateBorrowed));
+    borrowHistory.forEach(b => { if (b.dateReturned) b.dateReturned = new Date(b.dateReturned); });
+
+    // Aggregate stats
+    const equipmentStats = {};
+
+    // Stock-in/out
+    transactions.forEach(t => {
+      const name = t.equipmentName;
+      const amount = parseInt(t.transactionAmount) || 0;
+      if (!equipmentStats[name]) equipmentStats[name] = { stockIn: 0, borrowed: 0, returned: 0, unreturned: 0, lastUsed: null };
+      if (t.transactionType === 'IN') equipmentStats[name].stockIn += amount;
+      else if (t.transactionType === 'OUT') {
+        if (!equipmentStats[name].lastUsed || t.dateAdded > equipmentStats[name].lastUsed)
+          equipmentStats[name].lastUsed = t.dateAdded;
+      }
+    });
+
+    // Borrow history
+    borrowHistory.forEach(b => {
+    // INCLUDE both ACCEPTED and RETURNED
+    if (!["ACCEPTED", "RETURNED"].includes(b.status)) return;
+
+    const name = b.equipmentName;
+    const qty = parseInt(b.quantity) || 0;
+
+    if (!equipmentStats[name]) {
+      equipmentStats[name] = {
+        stockIn: 0,
+        borrowed: 0,
+        returned: 0,
+        unreturned: 0,
+        currentQty: 0,
+        lastUsed: null
+      };
+    }
+
+    // Always count borrowed
+    equipmentStats[name].borrowed += qty;
+
+    // Count returned ONLY if dateReturned exists
+    if (b.dateReturned) {
+      equipmentStats[name].returned += qty;
+    }
+
+    // Last used = latest borrow or return date
+    const activityDate = b.dateReturned || b.dateBorrowed;
+    if (!equipmentStats[name].lastUsed || activityDate > equipmentStats[name].lastUsed) {
+      equipmentStats[name].lastUsed = activityDate;
+    }
+  });
+
+  // ✅ FINAL CALCULATIONS (IMPORTANT)
+  Object.values(equipmentStats).forEach(stats => {
+    stats.unreturned = stats.borrowed - stats.returned;
+    stats.currentQty = stats.stockIn + stats.returned - stats.borrowed;
+  });
+
+      // --- Equipment Breakdown Table ---
+      Object.entries(equipmentStats).forEach(([name, s]) => {
+        const utilizationRate = s.borrowed + s.stockIn > 0 ? ((s.borrowed / (s.borrowed + s.stockIn)) * 100).toFixed(1) + '%' : '0%';
+        breakdownBody.innerHTML += `
+          <tr>
+            <td>${name}</td>
+            <td>${s.stockIn}</td>
+            <td>${s.borrowed}</td>
+            <td>${s.returned}</td>
+            <td>${s.unreturned}</td>
+            <td>${s.currentQty}</td>
+            <td>${utilizationRate}</td>
+            <td>${s.lastUsed ? s.lastUsed.toLocaleDateString() : 'Never'}</td>
+          </tr>
+        `;
+      });
+
+      // --- Detailed Unreturned Items Log ---
+      const unreturnedItems = borrowHistory.filter(b => b.status === 'ACCEPTED' && !b.dateReturned);
+      if (unreturnedItems.length) {
+        unreturnedItems.forEach(b => {
+          unreturnedBody.innerHTML += `
+            <tr>
+              <td>${b.dateBorrowed.toLocaleDateString()}</td>
+              <td>${b.equipmentName}</td>
+              <td>${b.quantity}</td>
+              <td>${b.borrowerName}</td>
+            </tr>
+          `;
+        });
+      } else {
+        unreturnedBody.innerHTML = `<tr><td colspan="4" style="color:#aaa; font-style:italic;">No unreturned equipment at this time.</td></tr>`;
+      }
+
+      // --- Returned Equipment Log ---
+  const returnedItems = borrowHistory.filter(
+    b => b.status === "RETURNED" && b.dateReturned
+  );
+
+  returnedItems.sort((a, b) => b.dateReturned - a.dateReturned);
+
+
+  if (returnedItems.length) {
+    returnedItems.forEach(b => {
+      returnedBody.innerHTML += `
+        <tr>
+          <td>${b.dateBorrowed.toLocaleDateString()}</td>
+          <td>${b.dateReturned.toLocaleDateString()}</td>
+          <td>${b.equipmentName}</td>
+          <td>${b.quantity}</td>
+          <td>${b.borrowerName}</td>
+        </tr>
+      `;
+    });
+  } else {
+    returnedBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="color:#aaa; font-style:italic;">
+          No returned equipment records found.
+        </td>
+      </tr>
+    `;
+  }
+
+
+      // --- Executive Summary ---
+      const totalStockIn = Object.values(equipmentStats).reduce((a, s) => a + s.stockIn, 0);
+      const totalBorrowed = Object.values(equipmentStats).reduce((a, s) => a + s.borrowed, 0);
+      const netAvailable = Object.values(equipmentStats).reduce((a, s) => a + s.currentQty, 0);
+      const avgUtil = Object.values(equipmentStats).reduce((sum, s) => {
+        const total = s.stockIn + s.borrowed;
+        return sum + (total > 0 ? s.borrowed / total : 0);
+      }, 0) / Object.keys(equipmentStats).length || 0;
+
+      const efficiencyText = avgUtil < 0.5 ? "Low utilization. Review procurement." :
+                            avgUtil > 0.8 ? "High utilization. Monitor stock levels." :
+                            "Utilization within healthy range.";
+
+      const execData = [
+        ["Total Equipment Added (Stock-In)", totalStockIn],
+        ["Total Equipment Used (Borrowed + OUT)", totalBorrowed],
+        ["Net Available", netAvailable],
+        ["Average Utilization Rate", (avgUtil * 100).toFixed(1) + '% - ' + efficiencyText]
+      ];
+
+      execData.forEach(([metric, value]) => {
+        executiveBody.innerHTML += `<tr><td>${metric}</td><td>${value}</td></tr>`;
+      });
+
+      // ================================
+    // 🔥 INSIGHTS & RECOMMENDATIONS (EQUIPMENT)
+    // ================================
+
+    // Clear previous content
+    insightsList.innerHTML = "";
+    insightsList.className = "row";
+
+    const now = new Date();
+    const recentDaysThreshold = 30;
+
+    let mostUsed = null;
+    let leastUsed = null;
+    let totalUnused = 0;
+    const notUsedRecently = [];
+
+    const entries = Object.entries(equipmentStats);
+
+    if (entries.length > 0) {
+
+      // -------------------------------
+      // ANALYSIS
+      // -------------------------------
+
+      // Total unused equipment
+      entries.forEach(([_, s]) => {
+        totalUnused += s.currentQty || 0;
+      });
+
+      // Most Used
+      mostUsed = entries
+        .filter(([_, s]) => s.borrowed > 0)
+        .sort((a, b) => b[1].borrowed - a[1].borrowed)[0];
+
+      // Least Used (ignore recent)
+      leastUsed = entries
+        .filter(([_, s]) =>
+          s.stockIn > 0 &&
+          (!s.lastUsed ||
+            (now - s.lastUsed) / (1000 * 60 * 60 * 24) > recentDaysThreshold)
+        )
+        .sort((a, b) => a[1].borrowed - b[1].borrowed)[0];
+
+      // Not used recently
+      entries.forEach(([name, s]) => {
+        if (!s.lastUsed) {
+          notUsedRecently.push([name, "Never"]);
+        } else {
+          const days = (now - s.lastUsed) / (1000 * 60 * 60 * 24);
+          if (days > recentDaysThreshold) {
+            notUsedRecently.push([name, `${Math.floor(days)} days ago`]);
+          }
+        }
+      });
+
+      // Overall utilization
+      const avgUtilization =
+        entries.reduce((sum, [_, s]) => {
+          const total = s.stockIn + s.borrowed;
+          return sum + (total > 0 ? s.borrowed / total : 0);
+        }, 0) / entries.length;
+
+      // -------------------------------
+      // CARD FACTORY
+      // -------------------------------
+      const createCard = (title, content) => {
+        const isMuted =
+          content.startsWith("No") ||
+          content.startsWith("All");
+
+        const div = document.createElement("div");
+        div.className = "col-md-6 mb-3";
+        div.innerHTML = `
+          <div class="card h-100 border-light shadow-sm">
+            <div class="card-body">
+              <h6 class="card-title">${title}</h6>
+              <p class="card-text" style="${isMuted ? "color:#bbb;font-style:italic;" : ""}">
+                ${content}
+              </p>
+            </div>
+          </div>
+        `;
+        return div;
+      };
+
+      // -------------------------------
+      // CARD CONTENT
+      // -------------------------------
+      const cards = [
+        [
+          "Most Used Equipment",
+          mostUsed
+            ? `${mostUsed[0]} (${mostUsed[1].borrowed} units borrowed)<br>
+              Consider maintaining higher stock levels.`
+            : "No equipment usage recorded for this period."
+        ],
+        [
+          "Least Used Equipment",
+          leastUsed
+            ? `${leastUsed[0]} (${leastUsed[1].borrowed} units borrowed)<br>
+              Consider reducing stock or reallocating resources.`
+            : "No underutilized equipment identified."
+        ],
+        [
+          "Equipment Not Used Recently (30+ days)",
+          notUsedRecently.length
+            ? notUsedRecently
+                .slice(0, 5)
+                .map(([n, d]) => `- ${n} (Last used: ${d})`)
+                .join("<br>") +
+              "<br>Review if these items are still needed in inventory."
+            : "All equipment has been utilized recently."
+        ],
+        [
+          "Overall Equipment Utilization",
+          (() => {
+            const pct = (avgUtilization * 100).toFixed(1);
+            if (avgUtilization < 0.5)
+              return `Average: ${pct}%<br>
+                      Low utilization detected. Consider reviewing procurement practices.`;
+            if (avgUtilization > 0.8)
+              return `Average: ${pct}%<br>
+                      High utilization. Monitor stock levels to prevent shortages.`;
+            return `Average: ${pct}%<br>
+                    Utilization is within a healthy range.`;
+          })()
+        ],
+        [
+          "Unused Equipment",
+          totalUnused > 0
+            ? `There are ${totalUnused} unused equipment units available.<br>
+              Consider reallocating or optimizing usage.`
+            : "All equipment units are currently in active use."
+        ]
+      ];
+
+      // -------------------------------
+      // RENDER 2×2 GRID
+      // -------------------------------
+      for (let i = 0; i < cards.length; i += 2) {
+        const row = document.createElement("div");
+        row.className = "row mb-3";
+        row.appendChild(createCard(...cards[i]));
+        if (cards[i + 1]) row.appendChild(createCard(...cards[i + 1]));
+        insightsList.appendChild(row);
+      }
+
+    } else {
+      insightsList.innerHTML = `
+        <div class="col-12">
+          <p style="color:#bbb;font-style:italic;">
+            No equipment insights available for this period.
+          </p>
+        </div>
+      `;
+    }
+    }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Equipment PDF Report Script -->
+<script>
+async function generateEquipmentReportPDF(type) {
+  const { jsPDF } = window.jspdf;
+
+  if (!equipmentChartDataSets[type] || !equipmentChartDataSets[type].labels.length) {
+    alert("Chart data not ready.");
+    return;
+  }
+
+  // ------------------------------
+  // FETCH DATA
+  // ------------------------------
+  const [transRes, borrowRes] = await Promise.all([
+    fetch("/api/equipment/transactions"),
+    fetch("/api/borrow/history")
+  ]);
+  const transactions = await transRes.json();
+  const borrowHistory = await borrowRes.json();
+
+  const parseLocal = d => new Date(d.replace(" ", "T"));
+  transactions.forEach(t => t.dateAdded = t.dateAdded ? parseLocal(t.dateAdded) : new Date());
+  borrowHistory.forEach(b => {
+    b.dateBorrowed = parseLocal(b.dateBorrowed);
+    if (b.dateReturned) b.dateReturned = parseLocal(b.dateReturned);
+  });
+
+  // ------------------------------
+  // AGGREGATE EQUIPMENT STATS
+  // ------------------------------
+  const equipmentStats = {};
+
+  transactions.forEach(t => {
+    const name = t.equipmentName;
+    const qty = parseInt(t.transactionAmount) || 0;
+    if (!equipmentStats[name]) equipmentStats[name] = { stockIn:0, borrowed:0, returned:0, unreturned:0, currentQty:0, lastUsed:null };
+    if (t.transactionType === "IN") equipmentStats[name].stockIn += qty;
+  });
+
+  borrowHistory.forEach(b => {
+    if (!["ACCEPTED", "RETURNED"].includes(b.status)) return;
+    const name = b.equipmentName;
+    const qty = parseInt(b.quantity) || 0;
+    if (!equipmentStats[name]) equipmentStats[name] = { stockIn:0, borrowed:0, returned:0, unreturned:0, currentQty:0, lastUsed:null };
+    equipmentStats[name].borrowed += qty;
+    if (b.dateReturned) equipmentStats[name].returned += qty;
+
+    const activityDate = b.dateReturned || b.dateBorrowed;
+    if (!equipmentStats[name].lastUsed || activityDate > equipmentStats[name].lastUsed) {
+      equipmentStats[name].lastUsed = activityDate;
+    }
+  });
+
+  Object.values(equipmentStats).forEach(s => {
+    s.unreturned = s.borrowed - s.returned;
+    s.currentQty = s.stockIn + s.returned - s.borrowed;
+  });
+
+  // ------------------------------
+  // CREATE CHART IMAGE
+  // ------------------------------
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 400;
+  const ctx = canvas.getContext("2d");
+
+  const chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: equipmentChartDataSets[type].labels,
+      datasets: [
+        { label: "USED", data: equipmentChartDataSets[type].dataUsed, backgroundColor:"#f3545d" },
+        { label: "UNUSED", data: equipmentChartDataSets[type].dataUnused, backgroundColor:"#31ce36" }
+      ]
+    },
+    options: { responsive:false, plugins:{legend:{position:"bottom"}}, scales:{y:{beginAtZero:true}} }
+  });
+
+  await new Promise(r => setTimeout(r, 400));
+  const chartImage = canvas.toDataURL("image/png");
+  chart.destroy();
+
+  // ------------------------------
+  // INITIALIZE PDF
+  // ------------------------------
+  const pdf = new jsPDF("landscape", "mm", "a4");
+
+  pdf.setFontSize(18);
+  pdf.text(`Equipment Report (${type.toUpperCase()})`, 14, 15);
+  pdf.setFontSize(10);
+  pdf.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+  pdf.addImage(chartImage, "PNG", 15, 30, 260, 110);
+
+  // ------------------------------
+  // EXECUTIVE SUMMARY
+  // ------------------------------
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.text("EXECUTIVE SUMMARY", 14, 15);
+
+  const totalStockIn = Object.values(equipmentStats).reduce((a,s)=>a+s.stockIn,0);
+  const totalBorrowed = Object.values(equipmentStats).reduce((a,s)=>a+s.borrowed,0);
+  const netAvailable = Object.values(equipmentStats).reduce((a,s)=>a+s.currentQty,0);
+  const avgUtil = Object.values(equipmentStats).reduce((sum,s)=>{ const t=s.stockIn+s.borrowed; return sum+(t>0?s.borrowed/t:0); },0)/Object.keys(equipmentStats).length;
+
+  pdf.autoTable({
+    startY:22,
+    head:[["Metric","Value"]],
+    body:[
+      ["Total Equipment Added (Stock-In)", totalStockIn],
+      ["Total Equipment Used (Borrowed + OUT)", totalBorrowed],
+      ["Net Available", netAvailable],
+      ["Average Utilization Rate", (avgUtil*100).toFixed(1)+"%"]
+    ],
+    theme:'grid',
+    styles:{fontSize:10}
+  });
+
+  // ------------------------------
+  // EQUIPMENT BREAKDOWN
+  // ------------------------------
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.text("EQUIPMENT BREAKDOWN", 14, 15);
+
+  const breakdownRows = Object.entries(equipmentStats).map(([name,s]) => [
+    name, s.stockIn, s.borrowed, s.returned, s.unreturned, s.currentQty, s.lastUsed? s.lastUsed.toLocaleDateString():'Never'
+  ]);
+
+  pdf.autoTable({
+    startY:22,
+    head:[["Equipment","Stock-In","Borrowed","Returned","Unreturned","Available","Last Used"]],
+    body:breakdownRows,
+    styles:{fontSize:9}
+  });
+
+  // ------------------------------
+  // UNRETURNED LOG
+  // ------------------------------
+  const unreturnedItems = borrowHistory.filter(b => b.status==="ACCEPTED" && !b.dateReturned);
+  if(unreturnedItems.length){
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.text("UNRETURNED ITEMS LOG",14,15);
+    const unreturnedRows = unreturnedItems.map(b=>[b.dateBorrowed.toLocaleDateString(), b.equipmentName, b.quantity, b.borrowerName]);
+    pdf.autoTable({
+      startY:22,
+      head:[["Date Borrowed","Equipment","Qty","Borrower"]],
+      body:unreturnedRows,
+      styles:{fontSize:9}
+    });
+  }
+
+  // ------------------------------
+  // RETURNED LOG
+  // ------------------------------
+  const returnedItems = borrowHistory.filter(b => b.status==="RETURNED" && b.dateReturned);
+  if(returnedItems.length){
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.text("RETURNED ITEMS LOG",14,15);
+    const returnedRows = returnedItems.map(b=>[
+      b.dateBorrowed.toLocaleDateString(),
+      b.dateReturned.toLocaleDateString(),
+      b.equipmentName,
+      b.quantity,
+      b.borrowerName
+    ]);
+    pdf.autoTable({
+      startY:22,
+      head:[["Date Borrowed","Date Returned","Equipment","Qty","Borrower"]],
+      body:returnedRows,
+      styles:{fontSize:9}
+    });
+  }
+
+  // ------------------------------
+  // INSIGHTS & RECOMMENDATIONS
+  // ------------------------------
+  pdf.addPage();
+  pdf.setFontSize(14);
+  pdf.text("INSIGHTS & RECOMMENDATIONS",14,15);
+  pdf.setFontSize(10);
+
+  const now = new Date();
+  const recentThreshold = 30; // days
+  const entries = Object.entries(equipmentStats);
+
+  const mostUsed = entries.filter(([_,s])=>s.borrowed>0).sort((a,b)=>b[1].borrowed-a[1].borrowed)[0];
+  const leastUsed = entries.filter(([_,s])=>s.stockIn>0 && (!s.lastUsed || (now-s.lastUsed)/(1000*60*60*24)>recentThreshold))
+    .sort((a,b)=>a[1].borrowed-b[1].borrowed)[0];
+  const notUsedRecently = entries.filter(([_,s])=>!s.lastUsed || (now-s.lastUsed)/(1000*60*60*24)>recentThreshold);
+
+  let yPos = 25;
+
+  if(mostUsed){
+    pdf.setFont(undefined,'bold'); pdf.text("• Most Used Equipment:",14,yPos);
+    pdf.setFont(undefined,'normal');
+    pdf.text(`${mostUsed[0]} (${mostUsed[1].borrowed} units borrowed)`,25,yPos+5);
+    pdf.text("Consider maintaining higher stock levels.",25,yPos+10);
+    yPos += 20;
+  }
+
+  if(leastUsed){
+    pdf.setFont(undefined,'bold'); pdf.text("• Least Used Equipment:",14,yPos);
+    pdf.setFont(undefined,'normal');
+    pdf.text(`${leastUsed[0]} (${leastUsed[1].borrowed} units borrowed)`,25,yPos+5);
+    pdf.text("Consider reducing stock or reallocating resources.",25,yPos+10);
+    yPos += 20;
+  }
+
+  if(notUsedRecently.length>0){
+    pdf.setFont(undefined,'bold'); pdf.text("• Equipment Not Used Recently (30+ days):",14,yPos);
+    pdf.setFont(undefined,'normal');
+    notUsedRecently.slice(0,5).forEach(([name,stats])=>{
+      const daysAgo = stats.lastUsed ? Math.floor((now-stats.lastUsed)/(1000*60*60*24)) : 'Never';
+      yPos += 5;
+      pdf.text(`- ${name} (Last used: ${daysAgo==='Never'?'Never':daysAgo+' days ago'})`,25,yPos);
+    });
+    yPos += 10;
+    pdf.text("Review if these items are still needed in inventory.",25,yPos);
+    yPos += 10;
+  }
+
+  const avgUtilization = entries.reduce((sum,[_,s])=>{
+    const total = s.stockIn+s.borrowed;
+    return sum + (total>0 ? s.borrowed/total : 0);
+  },0)/entries.length;
+
+  pdf.setFont(undefined,'bold'); pdf.text("• Overall Equipment Utilization:",14,yPos);
+  pdf.setFont(undefined,'normal');
+  pdf.text(`Average: ${(avgUtilization*100).toFixed(1)}%`,25,yPos+5);
+
+  if(avgUtilization<0.5) pdf.text("Low utilization detected. Consider reviewing procurement practices.",25,yPos+10);
+  else if(avgUtilization>0.8) pdf.text("High utilization. Monitor stock levels to prevent shortages.",25,yPos+10);
+  else pdf.text("Utilization is within a healthy range (50-80%).",25,yPos+10);
+
+  const totalUnused = entries.reduce((sum,[_,s])=>sum+s.currentQty,0);
+  yPos += 20;
+  pdf.setFont(undefined,'bold'); pdf.text("• Unused Equipment:",14,yPos);
+  pdf.setFont(undefined,'normal');
+  pdf.text(totalUnused>0 ? `There are ${totalUnused} unused equipment units available. Consider reallocating or optimizing usage.` : "All equipment units are currently in active use.",25,yPos+5);
+
+  // ------------------------------
+  pdf.save(`equipment-report-${type}-${new Date().toISOString().slice(0,10)}.pdf`);
+}
+</script>
+
 
   </body>
 </html>
