@@ -368,17 +368,40 @@ def get_farmers():
 #  Create supply
 @app.route('/inventory/supplies', methods=['POST'])
 def insert_supply():
-    data = request.get_json()
-    supply = {
-        "name": data.get("name"),
-        "quantity": int(data.get("quantity")),
-        "unitPrice": float(data.get("unitPrice", 0)),
-        "expirationDate": data.get("expirationDate"),
-        "dateAdded": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "transactionType": "IN"  # Always IN for adding
-    }
-    result = supplies_collection.insert_one(supply)
-    return jsonify({"message": "Supply added", "id": str(result.inserted_id)})
+    try:
+        data = request.get_json()
+        supply = {
+            "name": data.get("name"),
+            "quantity": int(data.get("quantity", 0)),
+            "unitPrice": float(data.get("unitPrice", 0)),
+            "expirationDate": data.get("expirationDate"),
+            "dateAdded": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "transactionType": "IN"  # Always IN for adding
+        }
+
+        # Insert the supply
+        result = supplies_collection.insert_one(supply)
+        supply_id = str(result.inserted_id)
+
+        # Insert transaction record for the new supply
+        transaction_record = {
+            "supplyId": supply_id,
+            "supplyName": supply["name"],
+            "transactionType": "IN",
+            "transactionAmount": supply["quantity"],
+            "dateAdded": supply["dateAdded"],
+            "previousQuantity": 0,
+            "newQuantity": supply["quantity"],
+            "unitPrice": supply["unitPrice"],
+            "expirationDate": supply.get("expirationDate")
+        }
+        supply_transactions_collection.insert_one(transaction_record)
+
+        return jsonify({"message": "Supply added", "id": supply_id}), 201
+
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
 
 
 @app.route('/api/supply/<supply_id>', methods=['GET'])
@@ -682,27 +705,34 @@ def inventory_statistics():
 # New endpoint to get supply transaction history
 @app.route('/api/supplies/transactions', methods=['GET'])
 def get_supply_transactions():
-    transactions = list(supply_transactions_collection.find())
-    for t in transactions:
-        t["_id"] = str(t["_id"])
-    return jsonify(transactions)
+    try:
+        transactions = list(supply_transactions_collection.find())
+        
+        # Convert ObjectId fields to string
+        for t in transactions:
+            t["_id"] = str(t["_id"])
+            t["supplyId"] = str(t["supplyId"])
+        
+        return jsonify(transactions), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
     
 #Create Equipment
 @app.route('/inventory/equipment', methods=['POST'])
 def insert_equipment():
     data = request.get_json()
     equipment_name = data.get("name")
-    quantity = int(data.get("quantity"))
-    unit = data.get("unit")  # <-- NEW FIELD
+    added_quantity = int(data.get("quantity"))
+    unit = data.get("unit")  # New field
     date_added = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Insert equipment with usage stats
+    # --- Insert equipment ---
     equipment = {
         "name": equipment_name,
-        "quantity": quantity,
-        "unit": unit,  # <-- ADD TO DOCUMENT
+        "quantity": added_quantity,
+        "unit": unit,
         "dateAdded": date_added,
-        "transactionType": "IN",
+        "transactionType": "IN",  # Indicates equipment was added
         "lastUsed": None,
         "totalBorrowCount": 0
     }
@@ -710,7 +740,7 @@ def insert_equipment():
     result = equipment_collection.insert_one(equipment)
     equipment_id = str(result.inserted_id)
 
-    # Generate QR code
+    # --- Generate QR code ---
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -732,11 +762,25 @@ def insert_equipment():
         {"$set": {"qrCode": qr_base64}}
     )
 
+    # --- Insert transaction record with correct previous/new quantities ---
+    transaction = {
+        "equipmentId": equipment_id,               # string ID
+        "equipmentName": equipment_name,
+        "transactionType": "IN",
+        "transactionAmount": added_quantity,
+        "dateAdded": date_added,
+        "previousQuantity": 0,                     # new equipment, so previous stock = 0
+        "newQuantity": added_quantity,             # after addition
+        "notes": "New equipment added"
+    }
+    equipment_transactions_collection.insert_one(transaction)
+
     return jsonify({
         "message": "Equipment added",
         "id": equipment_id,
         "qrCode": qr_base64
     })
+
 
 @app.route('/api/equipment/<equipment_id>', methods=['GET'])
 def get_tool(equipment_id):
