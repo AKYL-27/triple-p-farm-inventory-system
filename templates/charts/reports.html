@@ -1638,22 +1638,37 @@ document.addEventListener("DOMContentLoaded", loadEquipmentChart);
     stats.currentQty = stats.stockIn + stats.returned - stats.borrowed;
   });
 
-      // --- Equipment Breakdown Table ---
-      Object.entries(equipmentStats).forEach(([name, s]) => {
-        const utilizationRate = s.borrowed + s.stockIn > 0 ? ((s.borrowed / (s.borrowed + s.stockIn)) * 100).toFixed(1) + '%' : '0%';
-        breakdownBody.innerHTML += `
-          <tr>
-            <td>${name}</td>
-            <td>${s.stockIn}</td>
-            <td>${s.borrowed}</td>
-            <td>${s.returned}</td>
-            <td>${s.unreturned}</td>
-            <td>${s.currentQty}</td>
-            <td>${utilizationRate}</td>
-            <td>${s.lastUsed ? s.lastUsed.toLocaleDateString() : 'Never'}</td>
-          </tr>
-        `;
-      });
+     // --- Equipment Breakdown Table ---
+      Object.entries(equipmentStats)
+        .sort(([, a], [, b]) => {
+          // Put items with no lastUsed at the bottom
+          if (!a.lastUsed && !b.lastUsed) return 0;
+          if (!a.lastUsed) return 1;
+          if (!b.lastUsed) return -1;
+      
+          // Newest first
+          return new Date(b.lastUsed) - new Date(a.lastUsed);
+        })
+        .forEach(([name, s]) => {
+          const utilizationRate =
+            s.borrowed + s.stockIn > 0
+              ? ((s.borrowed / (s.borrowed + s.stockIn)) * 100).toFixed(1) + '%'
+              : '0%';
+      
+          breakdownBody.innerHTML += `
+            <tr>
+              <td>${name}</td>
+              <td>${s.stockIn}</td>
+              <td>${s.borrowed}</td>
+              <td>${s.returned}</td>
+              <td>${s.unreturned}</td>
+              <td>${s.currentQty}</td>
+              <td>${utilizationRate}</td>
+              <td>${s.lastUsed ? new Date(s.lastUsed).toLocaleDateString() : 'Never'}</td>
+            </tr>
+          `;
+        });
+
 
       // --- Detailed Unreturned Items Log ---
       const unreturnedItems = borrowHistory.filter(b => b.status === 'ACCEPTED' && !b.dateReturned);
