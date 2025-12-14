@@ -1306,13 +1306,14 @@ def check_supply():
         }), 500
 
 @app.route('/api/products/validate', methods=['GET'])
-def validate_product_quantity():
+def validate_product():
     product_name = request.args.get("name")
     requested_qty = request.args.get("qty", type=int)
 
     if not product_name:
         return jsonify({"status": "ERROR", "message": "Please provide a product name."}), 400
 
+    # Find supply case-insensitive
     supply = supplies_collection.find_one(
         {"name": {"$regex": f"^{product_name}$", "$options": "i"}}
     )
@@ -1324,19 +1325,23 @@ def validate_product_quantity():
         }), 200
 
     available_qty = supply.get("quantity", 0)
+    unit_price = supply.get("unitPrice", 0)
+    price_str = f"₱{float(unit_price):.2f}"
 
+    # If quantity is not provided yet, just check availability
     if requested_qty is None:
         if available_qty > 0:
             return jsonify({
                 "status": "AVAILABLE",
-                "message": f"{supply['name']} is available. Stock: {available_qty}. Please enter quantity."
+                "message": f"{supply['name']} is available. Stock: {available_qty}. Unit Price: {price_str}. Please enter quantity."
             }), 200
         else:
             return jsonify({
                 "status": "OUT_OF_STOCK",
-                "message": f"Sorry, {supply['name']} is out of stock."
+                "message": f"Sorry, {supply['name']} is out of stock. Unit Price: {price_str}."
             }), 200
 
+    # Quantity validation
     if requested_qty > available_qty:
         return jsonify({
             "status": "INSUFFICIENT_STOCK",
@@ -1345,9 +1350,8 @@ def validate_product_quantity():
 
     return jsonify({
         "status": "VALID",
-        "message": f"✅ {supply['name']} is available. Requested: {requested_qty}. In stock: {available_qty}. Please enter delivery address."
+        "message": f"✅ {supply['name']} is available. Requested: {requested_qty}. In stock: {available_qty}. Unit Price: {price_str}. Please enter delivery address."
     }), 200
-
 # ---------------------
 if __name__ == "__main__":
     app.run(debug=True)
