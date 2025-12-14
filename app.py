@@ -1349,18 +1349,18 @@ def validate_product():
         }), 200
 
     if requested_qty <= available_qty:
-    total_price = requested_qty * unit_price
-    total_price_str = f"₱{total_price:.2f}"
+        total_price = requested_qty * unit_price
+        total_price_str = f"₱{total_price:.2f}"
 
-    return jsonify({
-        "status": "VALID",
-        "message": (
-            f"✅ {supply['name']} is available.\n"
-            f"Requested Quantity: {requested_qty}\n"
-            f"Unit Price: {price_str}\n"
-            f"Total Price: {total_price_str}\n"            
-        )
-    }), 200
+        return jsonify({
+            "status": "VALID",
+            "message": (
+                f"✅ {supply['name']} is available.\n"
+                f"Requested Quantity: {requested_qty}\n"
+                f"Unit Price: {price_str}\n"
+                f"Total Price: {total_price_str}\n"            
+            )
+        }), 200
 
 # ---------------------
 if __name__ == "__main__":
