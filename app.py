@@ -1305,6 +1305,62 @@ def check_supply():
             "message": str(e)
         }), 500
 
+@app.route('/api/products/validate', methods=['GET'])
+def validate_product_quantity():
+    try:
+        product_name = request.args.get("name")
+        requested_qty = request.args.get("qty", type=int)
+
+        if not product_name:
+            return jsonify({
+                "status": "error",
+                "message": "Please provide a product name."
+            }), 400
+
+        if requested_qty is None or requested_qty <= 0:
+            return jsonify({
+                "status": "error",
+                "message": "Please provide a valid quantity."
+            }), 400
+
+        supply = supplies_collection.find_one(
+            {"name": {"$regex": f"^{product_name}$", "$options": "i"}},
+            {"name": 1, "quantity": 1}
+        )
+
+        if not supply:
+            return jsonify({
+                "status": "ok",
+                "message": f"Sorry, {product_name} is not found in the inventory."
+            }), 200
+
+        available_qty = supply.get("quantity", 0)
+
+        if requested_qty > available_qty:
+            return jsonify({
+                "status": "ok",
+                "message": (
+                    f"Sorry, this product currently has only "
+                    f"{available_qty} in stock."
+                )
+            }), 200
+
+        return jsonify({
+            "status": "ok",
+            "message": (
+                f"✅ {supply['name']} is available.\n"
+                f"Requested: {requested_qty}\n"
+                f"In stock: {available_qty}"
+            )
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 # ---------------------
 if __name__ == "__main__":
     app.run(debug=True)
