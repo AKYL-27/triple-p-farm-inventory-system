@@ -1333,7 +1333,7 @@ def validate_product():
         if available_qty > 0:
             return jsonify({
                 "status": "AVAILABLE",
-                "message": f"{supply['name']} is available. Stock: {available_qty}. Unit Price: {price_str}. Please enter quantity."
+                "message": f"{supply['name']} is available. Stock: {available_qty}. Unit Price: {price_str}."
             }), 200
         else:
             return jsonify({
