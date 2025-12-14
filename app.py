@@ -1307,58 +1307,45 @@ def check_supply():
 
 @app.route('/api/products/validate', methods=['GET'])
 def validate_product_quantity():
-    try:
-        product_name = request.args.get("name")
-        requested_qty = request.args.get("qty", type=int)
+    product_name = request.args.get("name")
+    requested_qty = request.args.get("qty", type=int)
 
-        if not product_name:
-            return jsonify({
-                "status": "error",
-                "message": "Please provide a product name."
-            }), 400
+    supply = supplies_collection.find_one(
+        {"name": {"$regex": f"^{product_name}$", "$options": "i"}}
+    )
 
-        if requested_qty is None or requested_qty <= 0:
-            return jsonify({
-                "status": "error",
-                "message": "Please provide a valid quantity."
-            }), 400
-
-        supply = supplies_collection.find_one(
-            {"name": {"$regex": f"^{product_name}$", "$options": "i"}},
-            {"name": 1, "quantity": 1}
-        )
-
-        if not supply:
-            return jsonify({
-                "status": "ok",
-                "message": f"Sorry, {product_name} is not found in the inventory."
-            }), 200
-
-        available_qty = supply.get("quantity", 0)
-
-        if requested_qty > available_qty:
-            return jsonify({
-                "status": "ok",
-                "message": (
-                    f"Sorry, this product currently has only "
-                    f"{available_qty} in stock."
-                )
-            }), 200
-
+    if not supply:
         return jsonify({
-            "status": "ok",
-            "message": (
-                f"✅ {supply['name']} is available.\n"
-                f"Requested: {requested_qty}\n"
-                f"In stock: {available_qty}"
-            )
-        }), 200
+            "status": "NOT_FOUND",
+            "message": f"Sorry, '{product_name}' is not in inventory. Please enter a valid product."
+        })
 
-    except Exception as e:
+    available_qty = supply.get("quantity", 0)
+
+    if requested_qty is None:
+        # User only entered product name, no quantity yet
+        if available_qty > 0:
+            return jsonify({
+                "status": "AVAILABLE",
+                "message": f"Yes, {supply['name']} is available. Stock: {available_qty}. Please enter quantity."
+            })
+        else:
+            return jsonify({
+                "status": "OUT_OF_STOCK",
+                "message": f"Sorry, {supply['name']} is out of stock."
+            })
+
+    # User provided quantity
+    if requested_qty > available_qty:
         return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+            "status": "INSUFFICIENT_STOCK",
+            "message": f"Sorry, only {available_qty} in stock. Please enter a lower quantity."
+        })
+
+    return jsonify({
+        "status": "VALID",
+        "message": f"✅ {supply['name']} is available. Requested: {requested_qty}. In stock: {available_qty}. Please enter delivery address."
+    })
 
 
 # ---------------------
