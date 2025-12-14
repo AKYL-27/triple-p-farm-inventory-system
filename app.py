@@ -540,17 +540,35 @@ def update_supply_stock(supply_id):
         # Calculate new quantity
         if transaction_type == "stock-in":
             new_quantity = current_quantity + quantity
+            transaction_code = "IN"
             message = f"Successfully added {quantity} units. New quantity: {new_quantity}"
         else:  # stock-out
             if quantity > current_quantity:
                 return jsonify({"message": "Insufficient stock"}), 400
             new_quantity = current_quantity - quantity
+            transaction_code = "OUT"
             message = f"Successfully removed {quantity} units. New quantity: {new_quantity}"
+
+        # ===== SAVE TRANSACTION (SAME AS update_supply) =====
+        transaction_record = {
+            "supplyId": supply_id,
+            "supplyName": current_supply.get("name"),
+            "transactionType": transaction_code,
+            "transactionAmount": quantity,
+            "previousQuantity": current_quantity,
+            "newQuantity": new_quantity,
+            "unitPrice": float(current_supply.get("unitPrice", 0)),
+            "expirationDate": current_supply.get("expirationDate"),
+            "dateAdded": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        supply_transactions_collection.insert_one(transaction_record)
+        # ===== END TRANSACTION SAVE =====
 
         # Update the supply
         update_data = {
             "quantity": new_quantity,
-            "transactionType": transaction_type.upper().replace("-", "_"),
+            "transactionType": transaction_code,
+            "transactionAmount": quantity,
             "dateUpdated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
@@ -560,19 +578,19 @@ def update_supply_stock(supply_id):
         )
 
         if result.modified_count:
-            # Get updated supply
             updated_supply = supplies_collection.find_one({"_id": ObjectId(supply_id)})
             updated_supply["_id"] = str(updated_supply["_id"])
-            
+
             return jsonify({
                 "message": message,
                 "supply": updated_supply
             }), 200
-        else:
-            return jsonify({"message": "No changes made"}), 200
+
+        return jsonify({"message": "No changes made"}), 200
 
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
 
 
 
