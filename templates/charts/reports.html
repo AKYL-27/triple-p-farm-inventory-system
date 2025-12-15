@@ -2035,19 +2035,36 @@ async function generateEquipmentReportPDF(type) {
   // EQUIPMENT BREAKDOWN
   // ------------------------------
   pdf.addPage();
-  pdf.setFontSize(14);
-  pdf.text("EQUIPMENT BREAKDOWN", 14, 15);
+pdf.setFontSize(14);
+pdf.text("EQUIPMENT BREAKDOWN", 14, 15);
 
-  const breakdownRows = Object.entries(equipmentStats).map(([name,s]) => [
-    name, s.stockIn, s.borrowed, s.returned, s.unreturned, s.currentQty, s.lastUsed? s.lastUsed.toLocaleDateString():'Never'
+const breakdownRows = Object.entries(equipmentStats)
+  .sort(([, a], [, b]) => {
+    // Push items with no lastUsed to the bottom
+    if (!a.lastUsed && !b.lastUsed) return 0;
+    if (!a.lastUsed) return 1;
+    if (!b.lastUsed) return -1;
+
+    // Newest first
+    return new Date(b.lastUsed) - new Date(a.lastUsed);
+  })
+  .map(([name, s]) => [
+    name,
+    s.stockIn,
+    s.borrowed,
+    s.returned,
+    s.unreturned,
+    s.currentQty,
+    s.lastUsed ? new Date(s.lastUsed).toLocaleDateString() : 'Never'
   ]);
 
-  pdf.autoTable({
-    startY:22,
-    head:[["Equipment","Stock-In","Borrowed","Returned","Unreturned","Available","Last Used"]],
-    body:breakdownRows,
-    styles:{fontSize:9}
-  });
+pdf.autoTable({
+  startY: 22,
+  head: [["Equipment","Stock-In","Borrowed","Returned","Unreturned","Available","Last Used"]],
+  body: breakdownRows,
+  styles: { fontSize: 9 }
+});
+
 
   // ------------------------------
   // UNRETURNED LOG
