@@ -1327,164 +1327,72 @@ async function generateSuppliesReportPDF(type) {
 
 
   <!--equpment-->
+<div class="modal fade" id="equipmentDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Equipment Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="equipmentModalBody"></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+  <!--equpment-->
 <script>
 let equipmentChartInstance;
+let equipmentCurrentView = "daily";
+let equipmentTransactions = [];
+let equipmentBorrowHistory = [];
+
+// EXACT SAME STRUCTURE AS SUPPLIES
 let equipmentChartDataSets = {
-  daily: { labels: [], dataUsed: [], dataUnused: [] },
-  weekly: { labels: [], dataUsed: [], dataUnused: [] },
-  monthly: { labels: [], dataUsed: [], dataUnused: [] }
+  daily: { labels: [], dataUsed: [], dataUnused: [], periods: [] },
+  weekly: { labels: [], dataUsed: [], dataUnused: [], periods: [] },
+  monthly: { labels: [], dataUsed: [], dataUnused: [], periods: [] }
 };
 
 // -----------------------------
-// DATE HELPERS
-// -----------------------------
-function parseDateString(dateStr) {
-  // Parse as local datetime (NO Z)
-  return new Date(dateStr.replace(" ", "T"));
-}
-
-
-function dayKey(date) {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function getStartOfWeek(date) {
-  const d = new Date(date);
-  const diff = d.getDate() - d.getDay();
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-// -----------------------------
-// LOAD CHART DATA
+// LOAD DATA
 // -----------------------------
 async function loadEquipmentChart() {
   try {
-    // Fetch data
     const [transRes, borrowRes] = await Promise.all([
       fetch("/api/equipment/transactions"),
       fetch("/api/borrow/history")
     ]);
 
-    const transactions = await transRes.json();
-    const borrowHistory = await borrowRes.json();
+    equipmentTransactions = await transRes.json();
+    equipmentBorrowHistory = await borrowRes.json();
 
-    // Normalize dates
-    transactions.forEach(t => {
-      t.dateAdded = t.dateAdded ? parseDateString(t.dateAdded) : null;
+    // Normalize dates (same idea as supplies)
+    equipmentTransactions.forEach(t => {
+      if (!t.dateAdded) return;
+      t.dateAdded = new Date(t.dateAdded.replace("T", " ").replace(/\.\d+.*$/, ""));
     });
 
-    borrowHistory.forEach(b => {
-      b.dateBorrowed = b.dateBorrowed ? parseDateString(b.dateBorrowed) : null;
-      if (b.dateReturned) b.dateReturned = parseDateString(b.dateReturned);
-    });
-
-    // -----------------------------
-    // EVENT AGGREGATION
-    // -----------------------------
-    const usedByDay = {};    // borrow events
-    const unusedByDay = {}; // stock-in events
-
-    // Borrowed = USED
-    borrowHistory.forEach(b => {
-      if (!["ACCEPTED", "RETURNED"].includes(b.status)) return;
+    equipmentBorrowHistory.forEach(b => {
       if (!b.dateBorrowed) return;
-
-      const key = dayKey(b.dateBorrowed);
-      usedByDay[key] = (usedByDay[key] || 0) + (parseInt(b.quantity) || 0);
+      b.dateBorrowed = new Date(b.dateBorrowed.replace("T", " ").replace(/\.\d+.*$/, ""));
     });
 
-    // Stock-in = UNUSED
-    transactions.forEach(t => {
-      if (t.transactionType !== "IN" || !t.dateAdded) return;
+    const allDates = [
+      ...equipmentTransactions.map(t => t.dateAdded),
+      ...equipmentBorrowHistory.map(b => b.dateBorrowed)
+    ].filter(d => d && !isNaN(d));
 
-      const key = dayKey(t.dateAdded);
-      unusedByDay[key] = (unusedByDay[key] || 0) + (parseInt(t.transactionAmount) || 0);
-    });
+    const maxDate = allDates.length ? new Date(Math.max(...allDates)) : new Date();
 
-    // -----------------------------
-    // DAILY (LAST 7 DAYS)
-    // -----------------------------
-    equipmentChartDataSets.daily = { labels: [], dataUsed: [], dataUnused: [] };
+    generateEquipmentChartData("daily", maxDate, 7);
+    generateEquipmentChartData("weekly", maxDate, 4);
+    generateEquipmentChartData("monthly", maxDate, 12);
 
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date();
-      day.setDate(day.getDate() - i);
-
-      const key = dayKey(day);
-      equipmentChartDataSets.daily.labels.push(day.toLocaleDateString());
-      equipmentChartDataSets.daily.dataUsed.push(usedByDay[key] || 0);
-      equipmentChartDataSets.daily.dataUnused.push(unusedByDay[key] || 0);
-    }
-
-    // -----------------------------
-    // WEEKLY (LAST 4 WEEKS)
-    // -----------------------------
-    equipmentChartDataSets.weekly = { labels: [], dataUsed: [], dataUnused: [] };
-
-for (let i = 3; i >= 0; i--) {
-  const weekStart = getStartOfWeek(new Date());
-  weekStart.setDate(weekStart.getDate() - i * 7);
-
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-
-  let used = 0;
-  let unused = 0;
-
-  for (let d = new Date(weekStart); d <= weekEnd; ) {
-    const key = dayKey(d);
-    used += usedByDay[key] || 0;
-    unused += unusedByDay[key] || 0;
-
-    d = new Date(d);
-    d.setDate(d.getDate() + 1);
-  }
-
-  equipmentChartDataSets.weekly.labels.push(
-    `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`
-  );
-  equipmentChartDataSets.weekly.dataUsed.push(used);
-  equipmentChartDataSets.weekly.dataUnused.push(unused);
-}
-
-    // -----------------------------
-    // MONTHLY (LAST 12 MONTHS)
-    // -----------------------------
-    equipmentChartDataSets.monthly = { labels: [], dataUsed: [], dataUnused: [] };
-
-    for (let i = 11; i >= 0; i--) {
-      const month = new Date();
-      month.setMonth(month.getMonth() - i);
-
-      const year = month.getFullYear();
-      const m = month.getMonth();
-
-      let used = 0;
-      let unused = 0;
-
-      Object.entries(usedByDay).forEach(([key, val]) => {
-        const d = new Date(key);
-        if (d.getFullYear() === year && d.getMonth() === m) used += val;
-      });
-
-      Object.entries(unusedByDay).forEach(([key, val]) => {
-        const d = new Date(key);
-        if (d.getFullYear() === year && d.getMonth() === m) unused += val;
-      });
-
-      equipmentChartDataSets.monthly.labels.push(
-        `${month.toLocaleString("default", { month: "short" })} ${year}`
-      );
-      equipmentChartDataSets.monthly.dataUsed.push(used);
-      equipmentChartDataSets.monthly.dataUnused.push(unused);
-    }
-
-    // -----------------------------
-    // CREATE CHART
-    // -----------------------------
     const ctx = document.getElementById("equipmentChart").getContext("2d");
 
     equipmentChartInstance = new Chart(ctx, {
@@ -1494,26 +1402,22 @@ for (let i = 3; i >= 0; i--) {
         datasets: [
           {
             label: "Equipment USED",
-            data: equipmentChartDataSets.daily.dataUsed,
             backgroundColor: "#f3545d",
-            borderColor: "#f3545d",
-            borderWidth: 1
+            data: equipmentChartDataSets.daily.dataUsed
           },
           {
             label: "Equipment UNUSED",
-            data: equipmentChartDataSets.daily.dataUnused,
             backgroundColor: "#31ce36",
-            borderColor: "#31ce36",
-            borderWidth: 1
+            data: equipmentChartDataSets.daily.dataUnused
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { position: "bottom" },
-          tooltip: { mode: "index", intersect: false }
+        onClick: (evt, elements) => {
+          if (!elements.length) return;
+          showEquipmentBarDetails(elements[0].index, elements[0].datasetIndex);
         },
         scales: {
           y: { beginAtZero: true }
@@ -1522,16 +1426,116 @@ for (let i = 3; i >= 0; i--) {
     });
 
   } catch (err) {
-    console.error("Error loading equipment chart:", err);
+    console.error("Equipment chart error:", err);
   }
+}
+
+// -----------------------------
+// GENERATE DATA (MATCH SUPPLIES)
+// -----------------------------
+function generateEquipmentChartData(type, maxDate, count) {
+  equipmentChartDataSets[type] = { labels: [], dataUsed: [], dataUnused: [], periods: [] };
+
+  for (let i = count - 1; i >= 0; i--) {
+    let start, end, label;
+
+    if (type === "daily") {
+      start = new Date(maxDate);
+      start.setDate(maxDate.getDate() - i);
+      start.setHours(0,0,0,0);
+      end = new Date(start.getTime() + 86400000 - 1);
+      label = start.toLocaleDateString();
+    } 
+    else if (type === "weekly") {
+      end = new Date(maxDate);
+      end.setDate(maxDate.getDate() - maxDate.getDay() - i * 7 + 6);
+      end.setHours(23,59,59,999);
+      start = new Date(end);
+      start.setDate(end.getDate() - 6);
+      start.setHours(0,0,0,0);
+      label = start.toLocaleDateString() + " - " + end.toLocaleDateString();
+    } 
+    else {
+      start = new Date(maxDate);
+      start.setMonth(maxDate.getMonth() - i, 1);
+      start.setHours(0,0,0,0);
+      end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23,59,59,999);
+      label = start.toLocaleString("default", { month: "short" }) + " " + start.getFullYear();
+    }
+
+    const used = equipmentBorrowHistory.filter(b =>
+      b.dateBorrowed >= start &&
+      b.dateBorrowed <= end &&
+      ["ACCEPTED","RETURNED"].includes(b.status)
+    ).reduce((sum,b) => sum + (parseInt(b.quantity) || 0), 0);
+
+    const unused = equipmentTransactions.filter(t =>
+      t.transactionType === "IN" &&
+      t.dateAdded >= start &&
+      t.dateAdded <= end
+    ).reduce((sum,t) => sum + (parseInt(t.transactionAmount) || 0), 0);
+
+    equipmentChartDataSets[type].labels.push(label);
+    equipmentChartDataSets[type].dataUsed.push(used);
+    equipmentChartDataSets[type].dataUnused.push(unused);
+    equipmentChartDataSets[type].periods.push({ start, end });
+  }
+}
+
+// -----------------------------
+// BAR CLICK → MODAL (MATCH SUPPLIES)
+// -----------------------------
+function showEquipmentBarDetails(index, datasetIndex) {
+  const period = equipmentChartDataSets[equipmentCurrentView].periods[index];
+  const type = datasetIndex === 0 ? "USED" : "UNUSED";
+
+  let records = [];
+
+  if (type === "USED") {
+    records = equipmentBorrowHistory.filter(b =>
+      b.dateBorrowed >= period.start &&
+      b.dateBorrowed <= period.end &&
+      ["ACCEPTED","RETURNED"].includes(b.status)
+    );
+  } else {
+    records = equipmentTransactions.filter(t =>
+      t.transactionType === "IN" &&
+      t.dateAdded >= period.start &&
+      t.dateAdded <= period.end
+    );
+  }
+
+  const map = {};
+  records.forEach(r => {
+    const name = r.equipmentName || r.name || "Unknown";
+    const qty = parseInt(r.quantity || r.transactionAmount) || 0;
+    if (!map[name]) map[name] = 0;
+    map[name] += qty;
+  });
+
+  const label = equipmentChartDataSets[equipmentCurrentView].labels[index];
+  let html = `<strong>${type} Equipment for ${label}</strong><br><br>`;
+
+  if (!Object.keys(map).length) {
+    html += "<em>No records found.</em>";
+  } else {
+    Object.entries(map).forEach(([name, qty]) => {
+      html += `• ${name}: ${qty}<br>`;
+    });
+  }
+
+  document.getElementById("equipmentModalBody").innerHTML = html;
+
+  new bootstrap.Modal(
+    document.getElementById("equipmentDetailsModal")
+  ).show();
 }
 
 // -----------------------------
 // VIEW SWITCHER
 // -----------------------------
 function updateEquipmentChartView(type) {
-  if (!equipmentChartInstance) return;
-
+  equipmentCurrentView = type;
   equipmentChartInstance.data.labels = equipmentChartDataSets[type].labels;
   equipmentChartInstance.data.datasets[0].data = equipmentChartDataSets[type].dataUsed;
   equipmentChartInstance.data.datasets[1].data = equipmentChartDataSets[type].dataUnused;
